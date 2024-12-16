@@ -246,29 +246,15 @@ class SettingsManager {
 
     async loadDefaultSettings() {
         try {
-            // Try multiple possible paths for the settings file
-            const paths = [
-                '/settings/default-settings.json',
-                './settings/default-settings.json',
-                '/public/settings/default-settings.json'
-            ];
-
-            let response;
-            for (const path of paths) {
-                try {
-                    response = await fetch(path);
-                    if (response.ok) break;
-                } catch (e) {
-                    console.log(`Tried path ${path}: ${e.message}`);
-                }
-            }
-
-            if (!response || !response.ok) {
-                throw new Error(`Could not load settings from any path`);
+            console.log('Attempting to load default settings...');
+            const response = await fetch('/settings/default-settings.json');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const settings = await response.json();
-            console.log('Loading default settings:', settings);
+            console.log('Successfully loaded default settings:', settings);
             
             // Ensure all numeric values are properly parsed
             Object.keys(settings).forEach(key => {
@@ -277,51 +263,28 @@ class SettingsManager {
                 }
             });
 
-            this.applySettings(settings);
-            this.addSettingToList('default');
+            // Scale certain values for display
+            const scaleFactors = {
+                attractionStrength: 100,
+                repulsionStrength: 100,
+                fadeSpeed: 1000,
+                connectionFadeSpeed: 1000
+            };
+
+            Object.keys(scaleFactors).forEach(key => {
+                if (settings[key] !== undefined) {
+                    settings[`${key}Display`] = settings[key] * scaleFactors[key];
+                }
+            });
+
+            await this.applySettings(settings);
+            console.log('Settings applied successfully');
         } catch (error) {
             console.error('Error loading default settings:', error);
-            this.showNotification('Error loading default settings', 'error');
-            
-            // Fallback to hardcoded default settings if loading fails
-            const fallbackSettings = {
-                particleCount: 100,
-                particleSize: 15.7,
-                fadeSpeed: 0.001,
-                connectionDistance: 260,
-                lineThickness: 2.8,
-                connectionFadeSpeed: 0.001,
-                attractionStrength: 0.06,
-                attractionDistance: 360,
-                repulsionStrength: 0,
-                maxIterations: 100,
-                zoom: 23,
-                seahorseX: -0.745,
-                seahorseY: 0.1,
-                fullMatrixMode: false,
-                colorfulMode: false,
-                persistentConnections: false,
-                glowIntensity: 0.5,
-                minOpacity: 0.1,
-                maxOpacity: 0.8,
-                particleSpawnRate: 10,
-                minParticleLife: 0.5,
-                maxParticleLife: 2,
-                fadeInDuration: 0.2,
-                fadeOutDuration: 0.3,
-                particleColor: "#9437ff",
-                particleOpacity: 100,
-                lineColor: "#00f900",
-                lineOpacity: 100,
-                pattern: "spiral",
-                patternScale: 3.1,
-                patternDistance: 26,
-                dotColor: "#00ffff",
-                dotOpacity: 100
-            };
-            
-            console.log('Using fallback settings:', fallbackSettings);
-            this.applySettings(fallbackSettings);
+            // Don't show notification in production to avoid UI clutter
+            if (process.env.NODE_ENV !== 'production') {
+                this.showNotification('Error loading default settings', 'error');
+            }
         }
     }
 }
