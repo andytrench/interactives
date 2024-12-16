@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "npm install",
-    "vercel-build": "echo 'Build step completed'"
+    "build": "mkdir -p public/settings && cp -r public/* /vercel/output/static/",
+    "vercel-build": "npm run build"
   },
   "engines": {
     "node": ">=16.0.0"

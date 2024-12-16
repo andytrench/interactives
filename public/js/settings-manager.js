@@ -247,13 +247,21 @@ class SettingsManager {
     async loadDefaultSettings() {
         try {
             console.log('Attempting to load default settings...');
-            const response = await fetch('/settings/default-settings.json');
+            const response = await fetch('/settings/default-settings.json', {
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const settings = await response.json();
+            const text = await response.text();
+            console.log('Raw response:', text);
+            
+            const settings = JSON.parse(text);
             console.log('Successfully loaded default settings:', settings);
             
             // Ensure all numeric values are properly parsed
@@ -281,6 +289,10 @@ class SettingsManager {
             console.log('Settings applied successfully');
         } catch (error) {
             console.error('Error loading default settings:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+            });
             // Don't show notification in production to avoid UI clutter
             if (process.env.NODE_ENV !== 'production') {
                 this.showNotification('Error loading default settings', 'error');

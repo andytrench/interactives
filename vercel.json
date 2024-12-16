@@ -7,7 +7,17 @@
 },
 {
 "src": "public/**/*",
-"use": "@vercel/static"
+"use": "@vercel/static",
+"config": {
+"zeroConfig": true
+}
+},
+{
+"src": "public/js/**/*",
+"use": "@vercel/static",
+"config": {
+"zeroConfig": true
+}
 }
 ],
 "routes": [
@@ -21,6 +31,10 @@
 }
 },
 {
+"src": "/js/(.*)",
+"dest": "/public/js/$1"
+},
+{
 "src": "/api/(.*)",
 "dest": "server.js"
 },
@@ -28,5 +42,10 @@
 "src": "/(.*)",
 "dest": "/public/$1"
 }
-]
+],
+"outputs": {
+"static": {
+"copy": "public/**/*"
+}
+}
 }
