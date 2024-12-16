@@ -2,11 +2,20 @@ class SettingsManager {
     constructor(controls) {
         this.controls = controls;
         this.setupEventListeners();
+        this.loadSavedSettingsList();
     }
 
     setupEventListeners() {
         document.getElementById('saveSettings').addEventListener('click', () => this.saveSettings());
         document.getElementById('loadSettings').addEventListener('click', () => this.loadSettings());
+        
+        // Add change listener for settings list dropdown
+        const settingsList = document.getElementById('savedSettingsList');
+        settingsList.addEventListener('change', () => {
+            if (settingsList.value) {
+                this.loadSettingsByName(settingsList.value);
+            }
+        });
     }
 
     async saveSettings() {
@@ -34,17 +43,38 @@ class SettingsManager {
             document.body.removeChild(downloadLink);
             URL.revokeObjectURL(url);
 
-            // Show success message
+            // Update settings list
+            this.addSettingToList(settingsName);
+            
             this.showNotification('Settings saved successfully!', 'success');
-
         } catch (error) {
             console.error('Error saving settings:', error);
             this.showNotification('Error saving settings', 'error');
         }
     }
 
+    addSettingToList(name) {
+        const settingsList = document.getElementById('savedSettingsList');
+        let found = false;
+        
+        // Check if setting already exists in list
+        for (let i = 0; i < settingsList.options.length; i++) {
+            if (settingsList.options[i].value === name) {
+                found = true;
+                break;
+            }
+        }
+        
+        // Add new option if not found
+        if (!found) {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            settingsList.appendChild(option);
+        }
+    }
+
     loadSettings() {
-        // Create file input
         const fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = '.json';
@@ -59,6 +89,7 @@ class SettingsManager {
                     try {
                         const settings = JSON.parse(event.target.result);
                         this.applySettings(settings);
+                        this.addSettingToList(settings.name);
                         this.showNotification('Settings loaded successfully!', 'success');
                     } catch (error) {
                         console.error('Error parsing settings file:', error);
@@ -76,67 +107,45 @@ class SettingsManager {
     }
 
     applySettings(settings) {
-        // Update CONFIG object
-        Object.assign(CONFIG, settings);
+        // Update CONFIG object with all valid settings
+        Object.keys(settings).forEach(key => {
+            if (key in CONFIG) {
+                CONFIG[key] = settings[key];
+            }
+        });
 
-        // Update all UI controls to reflect new settings
+        // Update UI controls to reflect new settings
         this.updateUIControls(settings);
+        
+        // Trigger color update if colors changed
+        if (settings.particleColor || settings.lineColor) {
+            window.dispatchEvent(new CustomEvent('colorUpdate'));
+        }
     }
 
     updateUIControls(settings) {
-        // Update range inputs
-        ['iterations', 'zoom', 'particleCount', 'fadeSpeed', 'connectionFadeSpeed',
-         'attractionStrength', 'repulsionStrength', 'particleSize', 'lineThickness',
-         'connectionDistance', 'attractionDistance', 'patternScale', 'patternDistance'
-        ].forEach(id => {
-            const element = document.getElementById(id);
-            if (element && settings[id] !== undefined) {
-                element.value = settings[id];
-                const valueElement = document.getElementById(`${id}Value`);
-                if (valueElement) {
-                    valueElement.textContent = settings[id];
+        // Update all UI elements to match loaded settings
+        Object.keys(settings).forEach(key => {
+            const element = document.getElementById(key);
+            const valueElement = document.getElementById(`${key}Value`);
+            
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = settings[key];
+                } else if (element.type === 'range' || element.type === 'number') {
+                    element.value = settings[key];
+                } else if (element.type === 'color') {
+                    element.value = settings[key];
                 }
             }
-        });
-
-        // Update checkboxes
-        ['fullMatrixMode', 'colorfulMode', 'persistentConnections'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element && settings[id] !== undefined) {
-                element.checked = settings[id];
+            
+            if (valueElement) {
+                valueElement.textContent = settings[key];
             }
         });
-
-        // Update color pickers and opacity
-        ['particle', 'line'].forEach(type => {
-            const colorPicker = document.getElementById(`${type}ColorPicker`);
-            const opacityPicker = document.getElementById(`${type}OpacityPicker`);
-            if (colorPicker && settings[`${type}Color`]) {
-                colorPicker.value = settings[`${type}Color`];
-                const event = new Event('input', { bubbles: true });
-                colorPicker.dispatchEvent(event);
-            }
-            if (opacityPicker && settings[`${type}Opacity`]) {
-                opacityPicker.value = settings[`${type}Opacity`];
-                document.getElementById(`${type}OpacityValue`).textContent = `${settings[`${type}Opacity`]}%`;
-                const event = new Event('input', { bubbles: true });
-                opacityPicker.dispatchEvent(event);
-            }
-        });
-
-        // Update pattern select
-        const patternSelect = document.getElementById('pattern');
-        if (patternSelect && settings.pattern) {
-            patternSelect.value = settings.pattern;
-            const event = new Event('change', { bubbles: true });
-            patternSelect.dispatchEvent(event);
-        }
-
-        window.dispatchEvent(new CustomEvent('colorUpdate'));
     }
 
     showNotification(message, type = 'info') {
-        // Create notification element if it doesn't exist
         let notification = document.getElementById('settings-notification');
         if (!notification) {
             notification = document.createElement('div');
@@ -144,14 +153,10 @@ class SettingsManager {
             document.body.appendChild(notification);
         }
 
-        // Set notification content and style
         notification.textContent = message;
         notification.className = `settings-notification ${type}`;
-
-        // Show notification
         notification.style.display = 'block';
 
-        // Hide after 3 seconds
         setTimeout(() => {
             notification.style.display = 'none';
         }, 3000);
