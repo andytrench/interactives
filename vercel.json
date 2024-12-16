@@ -12,6 +12,10 @@
 ],
 "routes": [
 {
+"src": "/settings/(.*)",
+"dest": "/public/settings/$1"
+},
+{
 "src": "/api/(.*)",
 "dest": "server.js"
 },

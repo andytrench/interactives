@@ -2,6 +2,7 @@ class SettingsManager {
     constructor(controls) {
         this.controls = controls;
         this.setupEventListeners();
+        this.loadDefaultSettings();
     }
 
     setupEventListeners() {
@@ -133,40 +134,55 @@ class SettingsManager {
     updateUIControls(settings) {
         console.log('Updating UI controls with settings:', settings);
         
+        // Special handling for forces and other numeric values that need scaling
+        const scaleFactors = {
+            attractionStrength: 100, // Convert 0.06 to 6
+            repulsionStrength: 100,
+            fadeSpeed: 1000,
+            connectionFadeSpeed: 1000
+        };
+        
         // Update all UI elements to match loaded settings
         Object.keys(settings).forEach(key => {
             const element = document.getElementById(key);
             const valueElement = document.getElementById(`${key}Value`);
             
             if (element) {
+                let displayValue = settings[key];
+                
+                // Scale the value for the slider if needed
+                if (scaleFactors[key]) {
+                    displayValue = settings[key] * scaleFactors[key];
+                }
+                
                 if (element.type === 'checkbox') {
                     element.checked = settings[key];
-                    // Dispatch change event
                     element.dispatchEvent(new Event('change', { bubbles: true }));
                 } else if (element.type === 'range' || element.type === 'number') {
-                    element.value = settings[key];
-                    // Dispatch input event
+                    element.value = displayValue;
                     element.dispatchEvent(new Event('input', { bubbles: true }));
                 } else if (element.type === 'color') {
                     element.value = settings[key];
-                    // Dispatch input event
                     element.dispatchEvent(new Event('input', { bubbles: true }));
                 } else if (element.tagName === 'SELECT') {
                     element.value = settings[key];
-                    // Dispatch change event
                     element.dispatchEvent(new Event('change', { bubbles: true }));
                 }
-            }
-            
-            // Update value display elements
-            if (valueElement) {
-                if (typeof settings[key] === 'number') {
-                    // Handle decimal places for floating point numbers
-                    valueElement.textContent = Number(settings[key]).toFixed(
-                        Number.isInteger(settings[key]) ? 0 : 3
-                    );
-                } else {
-                    valueElement.textContent = settings[key];
+                
+                // Update value display elements
+                if (valueElement) {
+                    if (typeof settings[key] === 'number') {
+                        if (scaleFactors[key]) {
+                            valueElement.textContent = displayValue;
+                        } else {
+                            // Handle decimal places for floating point numbers
+                            valueElement.textContent = Number(settings[key]).toFixed(
+                                Number.isInteger(settings[key]) ? 0 : 3
+                            );
+                        }
+                    } else {
+                        valueElement.textContent = settings[key];
+                    }
                 }
             }
         });
@@ -179,6 +195,7 @@ class SettingsManager {
             
             if (colorPicker && settings[`${type}Color`]) {
                 colorPicker.value = settings[`${type}Color`];
+                colorPicker.dispatchEvent(new Event('input', { bubbles: true }));
             }
             
             if (opacityPicker && settings[`${type}Opacity`] !== undefined) {
@@ -186,8 +203,25 @@ class SettingsManager {
                 if (opacityValue) {
                     opacityValue.textContent = `${settings[`${type}Opacity`]}%`;
                 }
+                opacityPicker.dispatchEvent(new Event('input', { bubbles: true }));
             }
         });
+
+        // Force update of pattern controls
+        const patternScale = document.getElementById('patternScale');
+        const patternDistance = document.getElementById('patternDistance');
+        
+        if (patternScale) {
+            patternScale.value = settings.patternScale;
+            document.getElementById('patternScaleValue').textContent = settings.patternScale;
+            patternScale.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        
+        if (patternDistance) {
+            patternDistance.value = settings.patternDistance;
+            document.getElementById('patternDistanceValue').textContent = settings.patternDistance;
+            patternDistance.dispatchEvent(new Event('input', { bubbles: true }));
+        }
 
         // Trigger a global update event
         window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
@@ -208,5 +242,21 @@ class SettingsManager {
         setTimeout(() => {
             notification.style.display = 'none';
         }, 3000);
+    }
+
+    async loadDefaultSettings() {
+        try {
+            const response = await fetch('/settings/default-settings.json');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const settings = await response.json();
+            console.log('Loading default settings:', settings);
+            this.applySettings(settings);
+            this.addSettingToList('default');
+        } catch (error) {
+            console.error('Error loading default settings:', error);
+            this.showNotification('Error loading default settings', 'error');
+        }
     }
 }
