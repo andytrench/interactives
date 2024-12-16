@@ -2,7 +2,6 @@ class SettingsManager {
     constructor(controls) {
         this.controls = controls;
         this.setupEventListeners();
-        this.loadSavedSettingsList();
     }
 
     setupEventListeners() {
@@ -11,11 +10,19 @@ class SettingsManager {
         
         // Add change listener for settings list dropdown
         const settingsList = document.getElementById('savedSettingsList');
-        settingsList.addEventListener('change', () => {
-            if (settingsList.value) {
-                this.loadSettingsByName(settingsList.value);
-            }
-        });
+        if (settingsList) {
+            settingsList.addEventListener('change', () => {
+                if (settingsList.value) {
+                    this.loadSettingsByName(settingsList.value);
+                }
+            });
+        }
+    }
+
+    loadSettingsByName(name) {
+        // This would be used if we had server-side storage
+        // For now, we'll just show a notification
+        this.showNotification('Loading settings from file is currently supported', 'info');
     }
 
     async saveSettings() {
