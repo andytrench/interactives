@@ -1,0 +1,268 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+#particleCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+}
+
+#controls {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    max-height: 90vh;
+    overflow-y: auto;
+    width: 300px;
+}
+
+.control-group {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+.control-group h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #00ff00;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+input[type="range"] {
+    width: 100%;
+    margin: 5px 0 15px 0;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.checkbox-label input {
+    margin-right: 8px;
+}
+
+.color-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+input[type="color"] {
+    width: 40px;
+    height: 25px;
+    border: none;
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+    border-radius: 4px;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    padding: 0;
+}
+
+input[type="color"]::-moz-color-swatch {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    padding: 0;
+}
+
+.color-control input[type="range"] {
+    flex: 1;
+    margin: 0;
+}
+
+.color-control span {
+    min-width: 45px;
+    text-align: right;
+}
+
+.pattern-select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+}
+
+.color-control {
+    margin-bottom: 15px;
+}
+
+.color-inputs {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+.color-inputs input[type="color"] {
+    width: 40px;
+    height: 25px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+}
+
+.color-inputs input[type="range"] {
+    flex: 1;
+    min-width: 100px;
+}
+
+.settings-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings-buttons input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+}
+
+.settings-buttons button {
+    width: 100%;
+    padding: 10px;
+    background: #00ffff22;
+    border: 1px solid #00ffff;
+    color: #00ffff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.settings-buttons button:hover {
+    background: #00ffff44;
+}
+
+#settingsName {
+    width: 100%;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+    margin-bottom: 5px;
+}
+
+#savedSettingsList {
+    width: 100%;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 4px;
+}
+
+.accept-color {
+    padding: 4px 8px;
+    background: #00ffff22;
+    border: 1px solid #00ffff;
+    color: #00ffff;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.accept-color:hover {
+    background: #00ffff44;
+}
+
+.pattern-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.pattern-button {
+    flex: 1;
+    padding: 8px 15px;
+    background: #00ffff22;
+    border: 1px solid #00ffff;
+    color: #00ffff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.pattern-button:hover {
+    background: #00ffff44;
+}
+
+.pattern-button.active {
+    background: #00ffff88;
+    color: #000;
+}
+
+.settings-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
+    z-index: 1000;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.settings-notification.success {
+    background-color: rgba(40, 167, 69, 0.9);
+}
+
+.settings-notification.error {
+    background-color: rgba(220, 53, 69, 0.9);
+}
+
+.settings-notification.info {
+    background-color: rgba(23, 162, 184, 0.9);
+}
+ 

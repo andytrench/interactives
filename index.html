@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plexus Effect Sandbox</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+    <div id="controls">
+        <!-- Group 1: Particle Properties -->
+        <div class="control-group">
+            <h3>Particle Properties</h3>
+            <label for="particleCount">Particle Count: <span id="particleCountValue">1000</span></label>
+            <input type="range" id="particleCount" min="100" max="5000" value="1000" step="100">
+            
+            <label for="particleSize">Particle Size: <span id="particleSizeValue">1</span></label>
+            <input type="range" id="particleSize" min="0.1" max="20" value="1" step="0.1">
+            
+            <label for="fadeSpeed">Dot Fade Speed: <span id="fadeSpeedValue">0.02</span></label>
+            <input type="range" id="fadeSpeed" min="1" max="100" value="20" step="1">
+        </div>
+
+        <!-- Group 2: Connection Properties -->
+        <div class="control-group">
+            <h3>Connection Properties</h3>
+            <label for="connectionDistance">Connection Distance: <span id="connectionDistanceValue">200</span></label>
+            <input type="range" id="connectionDistance" min="10" max="1000" value="200" step="10">
+            
+            <label for="lineThickness">Line Thickness: <span id="lineThicknessValue">0.5</span></label>
+            <input type="range" id="lineThickness" min="0.1" max="5" value="0.5" step="0.1">
+            
+            <label for="connectionFadeSpeed">Connection Fade: <span id="connectionFadeSpeedValue">0.01</span></label>
+            <input type="range" id="connectionFadeSpeed" min="1" max="100" value="10" step="1">
+        </div>
+
+        <!-- Group 3: Force Properties -->
+        <div class="control-group">
+            <h3>Forces</h3>
+            <label for="attractionStrength">Attraction: <span id="attractionStrengthValue">0.1</span></label>
+            <input type="range" id="attractionStrength" min="0" max="10" value="10" step=".0001">
+            
+            <label for="attractionDistance">Attraction Range: <span id="attractionDistanceValue">100</span></label>
+            <input type="range" id="attractionDistance" min="10" max="500" value="100" step="10">
+            
+            <label for="repulsionStrength">Repulsion: <span id="repulsionStrengthValue">0</span></label>
+            <input type="range" id="repulsionStrength" min="0" max="50" value="0" step="1">
+        </div>
+
+        <!-- Group 4: Mandelbrot Properties -->
+        <div class="control-group">
+            <h3>Mandelbrot</h3>
+            <label for="iterations">Max Iterations: <span id="iterationsValue">100</span></label>
+            <input type="range" id="iterations" min="10" max="1000" value="100" step="10">
+            
+            <label for="zoom">Zoom: <span id="zoomValue">1</span></label>
+            <input type="range" id="zoom" min="1" max="100" value="1" step="1">
+        </div>
+
+        <!-- Group 5: Visual Modes -->
+        <div class="control-group">
+            <h3>Visual Modes</h3>
+            <label class="checkbox-label">
+                <input type="checkbox" id="fullMatrixMode"> Full Matrix Mode
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="colorfulMode"> Colorful Mode
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="persistentConnections"> Persistent Connections
+            </label>
+        </div>
+
+        <!-- Group 6: Color Controls -->
+        <div class="control-group">
+            <h3>Colors</h3>
+            <div class="color-control">
+                <label for="particleColor">Particle Color:</label>
+                <div class="color-inputs">
+                    <input type="color" id="particleColorPicker" value="#00ffff">
+                    <input type="range" id="particleOpacityPicker" min="0" max="100" value="100">
+                    <span id="particleOpacityValue">100%</span>
+                    <button class="accept-color" id="acceptParticleColor">Accept</button>
+                </div>
+            </div>
+            
+            <div class="color-control">
+                <label for="lineColor">Line Color:</label>
+                <div class="color-inputs">
+                    <input type="color" id="lineColorPicker" value="#00ffff">
+                    <input type="range" id="lineOpacityPicker" min="0" max="100" value="15">
+                    <span id="lineOpacityValue">15%</span>
+                    <button class="accept-color" id="acceptLineColor">Accept</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add after Mandelbrot group -->
+        <div class="control-group">
+            <h3>Pattern Generator</h3>
+            <select id="pattern" class="pattern-select">
+                <option value="mandelbrot">Mandelbrot</option>
+                <option value="spiral">Spiral</option>
+                <option value="target">Concentric</option>
+                <option value="grid">Grid</option>
+                <option value="triangle">Triangle</option>
+            </select>
+            
+            <label for="patternScale">Pattern Scale: <span id="patternScaleValue">1</span></label>
+            <input type="range" id="patternScale" min="0.1" max="5" value="1" step="0.1">
+            
+            <label for="patternDistance">Pattern Distance: <span id="patternDistanceValue">50</span></label>
+            <input type="range" id="patternDistance" min="1" max="100" value="50" step="1">
+            
+            <div class="pattern-controls">
+                <button id="togglePattern" class="pattern-button">Show Pattern</button>
+                <button id="resetPattern" class="pattern-button">Reset Pattern</button>
+            </div>
+        </div>
+
+        <!-- Group 7: Settings Management -->
+        <div class="control-group">
+            <h3>Settings Management</h3>
+            <div class="settings-buttons">
+                <input type="text" id="settingsName" placeholder="Settings name" value="settings">
+                <button id="saveSettings">Save Settings</button>
+                <button id="loadSettings">Load Settings</button>
+                <select id="savedSettingsList">
+                    <option value="">Select saved settings...</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="mandelbrot.js"></script>
+    <script src="patterns.js"></script>
+    <script src="pattern-visualizer.js"></script>
+    <script src="particle.js"></script>
+    <script src="settings-manager.js"></script>
+    <script src="controls.js"></script>
+    <script src="renderer.js"></script>
+</body>
+</html> 
