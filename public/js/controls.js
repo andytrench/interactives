@@ -5,6 +5,7 @@ class Controls {
         console.log('Controls constructor called');
         this.mouse = { x: null, y: null, radius: 100 };
         this.initializeControls();
+        this.setInitialValues();
         this.setupEventListeners();
         this.setupColorControls();
         this.setupPatternControls();
@@ -23,6 +24,26 @@ class Controls {
         this.controls = {};
         controlIds.forEach(id => {
             this.controls[id] = document.getElementById(id);
+        });
+    }
+
+    setInitialValues() {
+        // Set initial values for all controls based on CONFIG
+        Object.keys(CONFIG).forEach(key => {
+            const element = document.getElementById(key);
+            if (element) {
+                if (element.type === 'checkbox') {
+                    element.checked = CONFIG[key];
+                } else if (element.type === 'range' || element.type === 'number' || element.type === 'color') {
+                    element.value = CONFIG[key];
+                } else if (element.tagName === 'SELECT') {
+                    element.value = CONFIG[key];
+                }
+                
+                // Trigger input/change event to update displays
+                const event = new Event(element.type === 'checkbox' || element.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true });
+                element.dispatchEvent(event);
+            }
         });
     }
 

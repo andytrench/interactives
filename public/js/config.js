@@ -1,23 +1,23 @@
 // Default configuration values
 const CONFIG = {
     // Particle settings
-    particleCount: 600,
-    particleSize: 1,
+    particleCount: 2200,
+    particleSize: 8.8,
     fadeSpeed: 0.001,
     
     // Connection settings
-    connectionDistance: 200,
-    lineThickness: 2.5,
-    connectionFadeSpeed: 0.01,
+    connectionDistance: 190,
+    lineThickness: 0.9,
+    connectionFadeSpeed: 0.024,
     
     // Force settings
-    attractionStrength: 0,
-    attractionDistance: 240,
+    attractionStrength: 0.04,
+    attractionDistance: 270,
     repulsionStrength: 0,
     
     // Mandelbrot settings
-    maxIterations: 100,
-    zoom: 1,
+    maxIterations: 120,
+    zoom: 23,
     seahorseX: -0.745,
     seahorseY: 0.1,
     
@@ -26,26 +26,28 @@ const CONFIG = {
     colorfulMode: false,
     persistentConnections: false,
     
-    // New config options
+    // Visual settings
     glowIntensity: 0.5,
     minOpacity: 0.1,
     maxOpacity: 0.8,
     
     // Particle lifecycle settings
-    particleSpawnRate: 10, // Particles to spawn per frame
+    particleSpawnRate: 10,
     minParticleLife: 0.5,
     maxParticleLife: 2.0,
-    fadeInDuration: 0.2, // 20% of life spent fading in
-    fadeOutDuration: 0.3, // 30% of life spent fading out
+    fadeInDuration: 0.2,
+    fadeOutDuration: 0.3,
     
-    // Add to existing CONFIG object
-    particleColor: '#00ffff',
+    // Color settings
+    particleColor: '#9437ff',
     particleOpacity: 100,
-    lineColor: '#00ffff',
-    lineOpacity: 15,
+    lineColor: '#00f900',
+    lineOpacity: 100,
+    dotColor: '#00ffff',
+    dotOpacity: 100,
     
     // Pattern settings
-    pattern: 'mandelbrot', // 'mandelbrot', 'spiral', 'target', 'grid', 'triangle'
-    patternScale: 1,
-    patternDistance: 50, // How far particles can spawn from pattern lines (1-100)
+    pattern: 'mandelbrot',
+    patternScale: 1.5,
+    patternDistance: 26
 }; 

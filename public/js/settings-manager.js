@@ -124,6 +124,8 @@ class SettingsManager {
     }
 
     updateUIControls(settings) {
+        console.log('Updating UI controls with settings:', settings);
+        
         // Update all UI elements to match loaded settings
         Object.keys(settings).forEach(key => {
             const element = document.getElementById(key);
@@ -132,17 +134,56 @@ class SettingsManager {
             if (element) {
                 if (element.type === 'checkbox') {
                     element.checked = settings[key];
+                    // Dispatch change event
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
                 } else if (element.type === 'range' || element.type === 'number') {
                     element.value = settings[key];
+                    // Dispatch input event
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
                 } else if (element.type === 'color') {
                     element.value = settings[key];
+                    // Dispatch input event
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                } else if (element.tagName === 'SELECT') {
+                    element.value = settings[key];
+                    // Dispatch change event
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
             
+            // Update value display elements
             if (valueElement) {
-                valueElement.textContent = settings[key];
+                if (typeof settings[key] === 'number') {
+                    // Handle decimal places for floating point numbers
+                    valueElement.textContent = Number(settings[key]).toFixed(
+                        Number.isInteger(settings[key]) ? 0 : 3
+                    );
+                } else {
+                    valueElement.textContent = settings[key];
+                }
             }
         });
+
+        // Special handling for color pickers and opacity
+        ['particle', 'line'].forEach(type => {
+            const colorPicker = document.getElementById(`${type}ColorPicker`);
+            const opacityPicker = document.getElementById(`${type}OpacityPicker`);
+            const opacityValue = document.getElementById(`${type}OpacityValue`);
+            
+            if (colorPicker && settings[`${type}Color`]) {
+                colorPicker.value = settings[`${type}Color`];
+            }
+            
+            if (opacityPicker && settings[`${type}Opacity`] !== undefined) {
+                opacityPicker.value = settings[`${type}Opacity`];
+                if (opacityValue) {
+                    opacityValue.textContent = `${settings[`${type}Opacity`]}%`;
+                }
+            }
+        });
+
+        // Trigger a global update event
+        window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
     }
 
     showNotification(message, type = 'info') {
