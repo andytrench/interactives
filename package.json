@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "mkdir -p .vercel/output/static && cp -r public/* .vercel/output/static/",
+    "build": "mkdir -p .vercel/output/static && cp -r public/* .vercel/output/static/ && mkdir -p .vercel/output/static/settings && cp -r public/settings/* .vercel/output/static/settings/",
     "vercel-build": "npm run build"
   },
   "engines": {

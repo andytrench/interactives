@@ -25,6 +25,16 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
+// Add this route near your other routes
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'ok',
+        version: process.env.npm_package_version,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Serve index.html for all other routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

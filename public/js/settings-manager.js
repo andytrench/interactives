@@ -245,37 +245,43 @@ class SettingsManager {
     }
 
     async loadDefaultSettings() {
+        const startTime = performance.now();
+        console.log(`[Settings] Environment: ${process.env.NODE_ENV}`);
+        console.log('[Settings] Starting to load default settings...');
+        
         try {
-            const startTime = performance.now();
-            console.log('[Settings] Starting to load default settings...');
+            const settingsUrl = '/settings/default-settings.json';
+            console.log(`[Settings] Fetching from: ${settingsUrl}`);
             
-            const response = await fetch('/settings/default-settings.json', {
+            const response = await fetch(settingsUrl, {
                 headers: {
                     'Cache-Control': 'no-cache',
                     'Pragma': 'no-cache'
                 }
             });
             
-            console.log(`[Settings] Fetch response status: ${response.status}`);
+            console.log(`[Settings] Response status: ${response.status}`);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const text = await response.text();
-            console.log('[Settings] Raw response length:', text.length);
+            console.log(`[Settings] Received ${text.length} bytes`);
             
             const settings = JSON.parse(text);
-            console.log('[Settings] Successfully parsed settings:', settings);
+            console.log('[Settings] Parsed settings:', settings);
             
             await this.applySettings(settings);
             
             const endTime = performance.now();
-            console.log(`[Settings] Settings loaded and applied in ${(endTime - startTime).toFixed(2)}ms`);
+            console.log(`[Settings] Settings applied in ${(endTime - startTime).toFixed(2)}ms`);
+            
+            // Verify settings were applied
+            console.log('[Settings] Current CONFIG:', CONFIG);
         } catch (error) {
-            console.error('[Settings] Error loading default settings:', error);
-            // Fall back to CONFIG defaults
-            console.log('[Settings] Using default CONFIG values');
+            console.error('[Settings] Error:', error);
+            console.log('[Settings] Using default CONFIG');
         }
     }
 }
