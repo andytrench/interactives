@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
+    <button id="toggleSettings" class="toggle-settings-button">
+        <span class="icon">⚙️</span>
+        <span class="text">Hide Settings</span>
+    </button>
     <canvas id="particleCanvas"></canvas>
     <div id="controls">
         <!-- Group 1: Particle Properties -->
@@ -18,8 +22,20 @@
             <label for="particleSize">Particle Size: <span id="particleSizeValue">1</span></label>
             <input type="range" id="particleSize" min="0.1" max="20" value="1" step="0.1">
             
-            <label for="fadeSpeed">Dot Fade Speed: <span id="fadeSpeedValue">0.02</span></label>
-            <input type="range" id="fadeSpeed" min="1" max="100" value="20" step="1">
+            <label for="fadeSpeed">Particle Fade Speed: <span id="fadeSpeedValue">0.001</span></label>
+            <input type="range" id="fadeSpeed" min="0.0001" max="0.002" value="0.001" step="0.0001">
+            
+            <label for="maxTravelDistance">Max Travel Distance: <span id="maxTravelDistanceValue">100</span></label>
+            <input type="range" id="maxTravelDistance" min="0" max="500" value="100" step="10">
+            
+            <label for="travelSpeed">Travel Speed: <span id="travelSpeedValue">0.5</span></label>
+            <input type="range" id="travelSpeed" min="0.1" max="2" value="0.5" step="0.1">
+            
+            <label for="momentum">Momentum: <span id="momentumValue">0.900</span></label>
+            <input type="range" id="momentum" min="0.900" max="2.000" value="0.900" step="0.001">
+            
+            <label for="friction">Friction: <span id="frictionValue">0.02</span></label>
+            <input type="range" id="friction" min="0" max="0.1" value="0.02" step="0.005">
         </div>
 
         <!-- Group 2: Connection Properties -->
@@ -41,7 +57,7 @@
             <label for="attractionStrength">Attraction: <span id="attractionStrengthValue">0.1</span></label>
             <input type="range" id="attractionStrength" min="0" max="10" value="10" step=".0001">
             
-            <label for="attractionDistance">Attraction Range: <span id="attractionDistanceValue">100</span></label>
+            <label for="attractionDistance">Force Range: <span id="attractionDistanceValue">100</span></label>
             <input type="range" id="attractionDistance" min="10" max="500" value="100" step="10">
             
             <label for="repulsionStrength">Repulsion: <span id="repulsionStrengthValue">0</span></label>

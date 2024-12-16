@@ -265,4 +265,52 @@ input[type="color"]::-moz-color-swatch {
 .settings-notification.info {
     background-color: rgba(23, 162, 184, 0.9);
 }
+
+#settingsThumbnail {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 5px;
+    border-radius: 4px;
+}
+
+#settingsThumbnail img {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+}
+
+#settingsThumbnail img:hover {
+    transform: scale(1.05);
+}
+
+.toggle-settings-button {
+    position: fixed;
+    top: 10px;
+    left: 320px;
+    padding: 8px 15px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #00ffff;
+    color: #00ffff;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.toggle-settings-button:hover {
+    background: rgba(0, 255, 255, 0.2);
+}
+
+.toggle-settings-button .icon {
+    margin-right: 5px;
+}
+
+#controls.hidden {
+    transform: translateX(-320px);
+}
+
+#controls {
+    transition: transform 0.3s ease;
+}
  

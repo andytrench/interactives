@@ -9,6 +9,16 @@ class Controls {
         this.setupEventListeners();
         this.setupColorControls();
         this.setupPatternControls();
+        
+        // Add settings toggle
+        const toggleButton = document.getElementById('toggleSettings');
+        const controls = document.getElementById('controls');
+        
+        toggleButton.addEventListener('click', () => {
+            controls.classList.toggle('hidden');
+            toggleButton.querySelector('.text').textContent = 
+                controls.classList.contains('hidden') ? 'Show Settings' : 'Hide Settings';
+        });
     }
 
     initializeControls() {
@@ -18,7 +28,8 @@ class Controls {
             'connectionFadeSpeed', 'attractionStrength', 'repulsionStrength',
             'particleSize', 'lineThickness', 'connectionDistance',
             'attractionDistance', 'fullMatrixMode', 'colorfulMode',
-            'persistentConnections'
+            'persistentConnections', 'maxTravelDistance', 'travelSpeed',
+            'momentum', 'friction'
         ];
 
         this.controls = {};
@@ -126,7 +137,9 @@ class Controls {
         if (this.controls.iterations) CONFIG.maxIterations = parseInt(this.controls.iterations.value);
         if (this.controls.zoom) CONFIG.zoom = parseInt(this.controls.zoom.value);
         if (this.controls.particleCount) CONFIG.particleCount = parseInt(this.controls.particleCount.value);
-        if (this.controls.fadeSpeed) CONFIG.fadeSpeed = parseInt(this.controls.fadeSpeed.value) / 1000;
+        if (this.controls.fadeSpeed) {
+            CONFIG.fadeSpeed = parseFloat(this.controls.fadeSpeed.value);
+        }
         if (this.controls.connectionFadeSpeed) CONFIG.connectionFadeSpeed = parseInt(this.controls.connectionFadeSpeed.value) / 1000;
         if (this.controls.attractionStrength) CONFIG.attractionStrength = parseInt(this.controls.attractionStrength.value) / 100;
         if (this.controls.repulsionStrength) CONFIG.repulsionStrength = parseInt(this.controls.repulsionStrength.value) / 100;
@@ -137,6 +150,18 @@ class Controls {
         if (this.controls.fullMatrixMode) CONFIG.fullMatrixMode = this.controls.fullMatrixMode.checked;
         if (this.controls.colorfulMode) CONFIG.colorfulMode = this.controls.colorfulMode.checked;
         if (this.controls.persistentConnections) CONFIG.persistentConnections = this.controls.persistentConnections.checked;
+        if (this.controls.maxTravelDistance) {
+            CONFIG.maxTravelDistance = parseInt(this.controls.maxTravelDistance.value);
+        }
+        if (this.controls.travelSpeed) {
+            CONFIG.travelSpeed = parseFloat(this.controls.travelSpeed.value);
+        }
+        if (this.controls.momentum) {
+            CONFIG.momentum = parseFloat(this.controls.momentum.value);
+        }
+        if (this.controls.friction) {
+            CONFIG.friction = parseFloat(this.controls.friction.value);
+        }
 
         this.updateDisplayValues();
     }

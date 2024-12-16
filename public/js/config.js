@@ -13,7 +13,7 @@ const CONFIG = {
     // Force settings
     attractionStrength: 0.04,
     attractionDistance: 270,
-    repulsionStrength: 0,
+    repulsionStrength: 0.02,
     
     // Mandelbrot settings
     maxIterations: 120,
@@ -49,5 +49,11 @@ const CONFIG = {
     // Pattern settings
     pattern: 'mandelbrot',
     patternScale: 1.5,
-    patternDistance: 26
+    patternDistance: 26,
+    
+    // Particle movement settings
+    maxTravelDistance: 100,  // Maximum distance a particle can travel
+    travelSpeed: 0.5,       // Speed at which particles travel
+    momentum: 0.900,        // Default momentum
+    friction: 0.02,         // How quickly particles slow down
 }; 

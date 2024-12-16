@@ -2,23 +2,27 @@ class Particle {
     constructor(x, y, size, color, initialLife = 1, maxLife = 2) {
         this.x = x;
         this.y = y;
+        this.startX = x;  // Store starting position
+        this.startY = y;
         this.size = size;
         this.color = color;
-        this.speed = 0.3 + Math.random() * 0.3;
-        this.angle = Math.random() * Math.PI * 2;
-        this.vx = Math.cos(this.angle) * this.speed;
-        this.vy = Math.sin(this.angle) * this.speed;
-        
-        // New lifecycle properties
+        this.connections = new Set();
+        this.connectionAlpha = 1;
+        this.alpha = 0;
         this.life = initialLife;
         this.maxLife = maxLife;
-        this.fadeInDuration = 0.2; // Time to fade in (as fraction of maxLife)
-        this.fadeOutDuration = 0.3; // Time to fade out (as fraction of maxLife)
+        this.distanceTraveled = 0;  // Track total distance traveled
         
-        // Calculate alpha based on life stage
-        this.alpha = this.calculateAlpha();
+        // Add momentum properties
+        this.targetX = x;
+        this.targetY = y;
+        this.ax = 0; // acceleration X
+        this.ay = 0; // acceleration Y
         
-        this.connections = new Set();
+        // Random initial velocity with momentum
+        const angle = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(angle) * CONFIG.travelSpeed;
+        this.vy = Math.sin(angle) * CONFIG.travelSpeed;
     }
 
     calculateAlpha() {
@@ -38,38 +42,81 @@ class Particle {
     }
 
     update(mouse, canvas) {
-        // Mouse attraction/repulsion
+        const oldX = this.x;
+        const oldY = this.y;
+        
+        // Reset acceleration
+        this.ax = 0;
+        this.ay = 0;
+
+        // Mouse interaction with momentum
         if (mouse.x !== null && mouse.y !== null) {
             const dx = mouse.x - this.x;
             const dy = mouse.y - this.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            
-            if (distance > 0 && distance < CONFIG.attractionDistance) {
-                const force = (CONFIG.attractionDistance - distance) / CONFIG.attractionDistance;
-                this.vx += (dx / distance) * CONFIG.attractionStrength * force - 
-                          (dx / distance) * CONFIG.repulsionStrength;
-                this.vy += (dy / distance) * CONFIG.attractionStrength * force - 
-                          (dy / distance) * CONFIG.repulsionStrength;
+
+            if (distance < CONFIG.attractionDistance) {
+                const force = (1 - distance / CONFIG.attractionDistance);
+                
+                // Apply attraction
+                const attractionForce = CONFIG.attractionStrength * force;
+                this.ax += (dx / distance) * attractionForce;
+                this.ay += (dy / distance) * attractionForce;
+                
+                // Apply repulsion (note the negative force and different scaling)
+                const repulsionForce = CONFIG.repulsionStrength * (1 - force);
+                this.ax -= (dx / distance) * repulsionForce;
+                this.ay -= (dy / distance) * repulsionForce;
             }
         }
+
+        // Apply momentum (now can go up to 2.0)
+        this.vx = this.vx * CONFIG.momentum + this.ax;
+        this.vy = this.vy * CONFIG.momentum + this.ay;
+
+        // Apply friction
+        this.vx *= (1 - CONFIG.friction);
+        this.vy *= (1 - CONFIG.friction);
 
         // Update position
         this.x += this.vx;
         this.y += this.vy;
-        this.life -= CONFIG.fadeSpeed;
 
-        // Update lifecycle
-        this.alpha = this.calculateAlpha();
+        // Calculate distance traveled
+        const frameDist = Math.sqrt(
+            Math.pow(this.x - oldX, 2) + 
+            Math.pow(this.y - oldY, 2)
+        );
+        this.distanceTraveled += frameDist;
 
-        // Bounce off walls
-        if (this.x < 0 || this.x > canvas.width) this.vx = -this.vx;
-        if (this.y < 0 || this.y > canvas.height) this.vy = -this.vy;
+        // Max travel distance behavior with momentum
+        if (this.distanceTraveled > CONFIG.maxTravelDistance) {
+            // Calculate return force to starting position
+            const returnDx = this.startX - this.x;
+            const returnDy = this.startY - this.y;
+            const returnDist = Math.sqrt(returnDx * returnDx + returnDy * returnDy);
+            
+            if (returnDist > 0) {
+                this.ax += (returnDx / returnDist) * 0.01;
+                this.ay += (returnDy / returnDist) * 0.01;
+            }
+        }
 
-        // Apply friction
-        this.vx *= 0.99;
-        this.vy *= 0.99;
+        // Bounce off walls with momentum
+        if (this.x < 0 || this.x > canvas.width) {
+            this.vx *= -CONFIG.momentum;
+            this.x = this.x < 0 ? 0 : canvas.width;
+        }
+        if (this.y < 0 || this.y > canvas.height) {
+            this.vy *= -CONFIG.momentum;
+            this.y = this.y < 0 ? 0 : canvas.height;
+        }
 
-        return this.life > 0;
+        // Update life and alpha
+        this.life += CONFIG.fadeSpeed;
+        this.alpha = Math.min(1, Math.min(this.life, 1 - this.life));
+
+        return this.life <= this.maxLife;
     }
 
     draw(ctx) {

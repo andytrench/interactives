@@ -29,32 +29,69 @@ class SettingsManager {
     async saveSettings() {
         try {
             const settingsName = document.getElementById('settingsName').value || 'settings';
-            const filename = `${settingsName}.json`;
+            const jsonFilename = `${settingsName}.json`;
+            const imageFilename = `${settingsName}.jpg`;
+            
+            // Create thumbnail
+            const canvas = document.getElementById('particleCanvas');
+            const thumbnailCanvas = document.createElement('canvas');
+            const thumbSize = 500;
+            thumbnailCanvas.width = thumbSize;
+            thumbnailCanvas.height = thumbSize;
+            
+            // Calculate center crop coordinates
+            const centerX = Math.max(0, (canvas.width - thumbSize) / 2);
+            const centerY = Math.max(0, (canvas.height - thumbSize) / 2);
+            
+            // Get the context and set background
+            const ctx = thumbnailCanvas.getContext('2d');
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, thumbSize, thumbSize);
+            
+            // Draw cropped and scaled version
+            ctx.drawImage(canvas, 
+                centerX, centerY, thumbSize, thumbSize,  // source coords and size
+                0, 0, thumbSize, thumbSize               // dest coords and size
+            );
+            
+            // Save thumbnail as separate file
+            thumbnailCanvas.toBlob(async (blob) => {
+                const imageUrl = URL.createObjectURL(blob);
+                const imageLink = document.createElement('a');
+                imageLink.href = imageUrl;
+                imageLink.download = imageFilename;
+                document.body.appendChild(imageLink);
+                imageLink.click();
+                document.body.removeChild(imageLink);
+                URL.revokeObjectURL(imageUrl);
+            }, 'image/jpeg', 0.9);
+            
+            // Convert thumbnail to base64 for JSON
+            const thumbnailData = thumbnailCanvas.toDataURL('image/jpeg', 0.9);
             
             // Collect all current settings
             const settings = {
                 ...CONFIG,
                 timestamp: new Date().toISOString(),
-                name: settingsName
+                name: settingsName,
+                thumbnail: thumbnailData
             };
 
-            // Create a Blob containing the settings
-            const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
+            // Save JSON file
+            const jsonBlob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+            const jsonUrl = URL.createObjectURL(jsonBlob);
+            const jsonLink = document.createElement('a');
+            jsonLink.href = jsonUrl;
+            jsonLink.download = jsonFilename;
+            document.body.appendChild(jsonLink);
+            jsonLink.click();
+            document.body.removeChild(jsonLink);
+            URL.revokeObjectURL(jsonUrl);
 
-            // Create download link and trigger it
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            downloadLink.download = filename;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(url);
-
-            // Update settings list
+            // Update UI
             this.addSettingToList(settingsName);
-            
-            this.showNotification('Settings saved successfully!', 'success');
+            this.displayThumbnail(thumbnailData);
+            this.showNotification('Settings and thumbnail saved successfully!', 'success');
         } catch (error) {
             console.error('Error saving settings:', error);
             this.showNotification('Error saving settings', 'error');
@@ -98,6 +135,9 @@ class SettingsManager {
                         const settings = JSON.parse(event.target.result);
                         this.applySettings(settings);
                         this.addSettingToList(settings.name);
+                        if (settings.thumbnail) {
+                            this.displayThumbnail(settings.thumbnail);
+                        }
                         this.showNotification('Settings loaded successfully!', 'success');
                     } catch (error) {
                         console.error('Error parsing settings file:', error);
@@ -115,83 +155,106 @@ class SettingsManager {
     }
 
     applySettings(settings) {
-        // Update CONFIG object with all valid settings
-        Object.keys(settings).forEach(key => {
-            if (key in CONFIG) {
-                CONFIG[key] = settings[key];
-            }
-        });
-
-        // Update UI controls to reflect new settings
+        console.log('Applying settings:', settings);
+        
+        // First, update CONFIG object
+        this.updateConfigFromSettings(settings);
+        
+        // Then update UI
         this.updateUIControls(settings);
         
-        // Trigger color update if colors changed
-        if (settings.particleColor || settings.lineColor) {
-            window.dispatchEvent(new CustomEvent('colorUpdate'));
+        // Trigger global update event
+        window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
+        
+        // Add a small delay to ensure all settings are applied before reset
+        setTimeout(() => {
+            // Force pattern refresh and particle reset
+            if (window.renderer) {
+                // If pattern visualizer exists, update it first
+                if (window.renderer.patternVisualizer) {
+                    window.renderer.patternVisualizer.generatePatternPoints();
+                }
+                
+                // Then reset all particles with new settings
+                window.renderer.initParticles();
+                
+                console.log('Pattern and particles reset after settings load');
+            }
+        }, 100); // Small delay to ensure settings are fully applied
+    }
+
+    updateConfigFromSettings(settings) {
+        // Handle both flat and grouped settings formats
+        if (settings.particle) {
+            // New grouped format
+            Object.assign(CONFIG, {
+                ...settings.particle,
+                ...settings.movement,
+                ...settings.connections,
+                ...settings.forces,
+                ...settings.pattern,
+                ...settings.mandelbrot,
+                ...settings.visualModes
+            });
+        } else {
+            // Old flat format
+            Object.keys(settings).forEach(key => {
+                if (key in CONFIG) {
+                    CONFIG[key] = settings[key];
+                }
+            });
         }
     }
 
     updateUIControls(settings) {
-        console.log('Updating UI controls with settings:', settings);
+        console.log('Updating UI with settings:', settings);
         
-        // Special handling for forces and other numeric values that need scaling
+        // Scale factors for certain values
         const scaleFactors = {
-            attractionStrength: 100, // Convert 0.06 to 6
-            repulsionStrength: 100,
-            fadeSpeed: 1000,
-            connectionFadeSpeed: 1000
+            attractionStrength: 100,  // 0.04 -> 4
+            repulsionStrength: 100,   // 0.02 -> 2
+            fadeSpeed: 10000,         // 0.0001 -> 1
+            connectionFadeSpeed: 1000  // 0.001 -> 1
         };
         
-        // Update all UI elements to match loaded settings
-        Object.keys(settings).forEach(key => {
+        // Update all UI elements
+        Object.keys(CONFIG).forEach(key => {
             const element = document.getElementById(key);
             const valueElement = document.getElementById(`${key}Value`);
             
             if (element) {
-                let displayValue = settings[key];
+                let value = settings[key] !== undefined ? settings[key] : CONFIG[key];
                 
-                // Scale the value for the slider if needed
+                // Scale up values for slider display if needed
                 if (scaleFactors[key]) {
-                    displayValue = settings[key] * scaleFactors[key];
+                    value = value * scaleFactors[key];
                 }
                 
                 if (element.type === 'checkbox') {
-                    element.checked = settings[key];
+                    element.checked = value;
                     element.dispatchEvent(new Event('change', { bubbles: true }));
                 } else if (element.type === 'range' || element.type === 'number') {
-                    element.value = displayValue;
+                    element.value = value;
                     element.dispatchEvent(new Event('input', { bubbles: true }));
                 } else if (element.type === 'color') {
-                    element.value = settings[key];
+                    element.value = value;
                     element.dispatchEvent(new Event('input', { bubbles: true }));
                 } else if (element.tagName === 'SELECT') {
-                    element.value = settings[key];
+                    element.value = value;
                     element.dispatchEvent(new Event('change', { bubbles: true }));
                 }
                 
-                // Update value display elements
+                // Update value display
                 if (valueElement) {
-                    if (typeof settings[key] === 'number') {
-                        if (scaleFactors[key]) {
-                            valueElement.textContent = displayValue;
-                        } else {
-                            // Handle decimal places for floating point numbers
-                            valueElement.textContent = Number(settings[key]).toFixed(
-                                Number.isInteger(settings[key]) ? 0 : 3
-                            );
-                        }
-                    } else {
-                        valueElement.textContent = settings[key];
-                    }
+                    valueElement.textContent = value;
                 }
             }
         });
 
-        // Special handling for color pickers and opacity
-        ['particle', 'line'].forEach(type => {
+        // Update color pickers and their opacities
+        ['particle', 'line', 'dot'].forEach(type => {
             const colorPicker = document.getElementById(`${type}ColorPicker`);
             const opacityPicker = document.getElementById(`${type}OpacityPicker`);
-            const opacityValue = document.getElementById(`${type}OpacityValue`);
             
             if (colorPicker && settings[`${type}Color`]) {
                 colorPicker.value = settings[`${type}Color`];
@@ -200,31 +263,37 @@ class SettingsManager {
             
             if (opacityPicker && settings[`${type}Opacity`] !== undefined) {
                 opacityPicker.value = settings[`${type}Opacity`];
-                if (opacityValue) {
-                    opacityValue.textContent = `${settings[`${type}Opacity`]}%`;
-                }
                 opacityPicker.dispatchEvent(new Event('input', { bubbles: true }));
             }
         });
 
-        // Force update of pattern controls
-        const patternScale = document.getElementById('patternScale');
-        const patternDistance = document.getElementById('patternDistance');
-        
-        if (patternScale) {
-            patternScale.value = settings.patternScale;
-            document.getElementById('patternScaleValue').textContent = settings.patternScale;
-            patternScale.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-        
-        if (patternDistance) {
-            patternDistance.value = settings.patternDistance;
-            document.getElementById('patternDistanceValue').textContent = settings.patternDistance;
-            patternDistance.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-
-        // Trigger a global update event
+        // Trigger global update
         window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
+    }
+
+    flattenSettings(settings) {
+        const flat = {};
+        
+        function flatten(obj, prefix = '') {
+            Object.entries(obj).forEach(([key, value]) => {
+                if (value && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+                    flatten(value, `${prefix}${key}.`);
+                } else {
+                    flat[`${prefix}${key}`] = value;
+                }
+            });
+        }
+        
+        flatten(settings);
+        return flat;
+    }
+
+    triggerPatternRefresh(settings) {
+        // This method is now handled in applySettings
+        // Keeping for backward compatibility
+        if (window.renderer) {
+            window.renderer.initParticles();
+        }
     }
 
     showNotification(message, type = 'info') {
@@ -282,6 +351,27 @@ class SettingsManager {
         } catch (error) {
             console.error('[Settings] Error:', error);
             console.log('[Settings] Using default CONFIG');
+        }
+    }
+
+    // Add method to display thumbnail when loading settings
+    displayThumbnail(thumbnailData) {
+        const thumbnail = document.createElement('img');
+        thumbnail.src = thumbnailData;
+        thumbnail.style.width = '100px';
+        thumbnail.style.height = '100px';
+        thumbnail.style.objectFit = 'cover';
+        thumbnail.style.borderRadius = '4px';
+        thumbnail.style.marginTop = '10px';
+        
+        const container = document.getElementById('settingsThumbnail') || document.createElement('div');
+        container.id = 'settingsThumbnail';
+        container.innerHTML = '';
+        container.appendChild(thumbnail);
+        
+        const settingsButtons = document.querySelector('.settings-buttons');
+        if (!document.getElementById('settingsThumbnail')) {
+            settingsButtons.appendChild(container);
         }
     }
 }
