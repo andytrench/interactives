@@ -7,10 +7,7 @@
 },
 {
 "src": "public/**/*",
-"use": "@vercel/static",
-"config": {
-"zeroConfig": true
-}
+"use": "@vercel/static"
 },
 {
 "src": "public/js/**/*",
@@ -43,9 +40,7 @@
 "dest": "/public/$1"
 }
 ],
-"outputs": {
-"static": {
-"copy": "public/**/*"
-}
+"env": {
+"NODE_ENV": "production"
 }
 }
