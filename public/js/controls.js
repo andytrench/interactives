@@ -28,10 +28,12 @@ class Controls {
     }
 
     setInitialValues() {
+        console.log('Setting initial values with CONFIG:', CONFIG);
         // Set initial values for all controls based on CONFIG
         Object.keys(CONFIG).forEach(key => {
             const element = document.getElementById(key);
             if (element) {
+                console.log(`Setting ${key} to ${CONFIG[key]}`);
                 if (element.type === 'checkbox') {
                     element.checked = CONFIG[key];
                 } else if (element.type === 'range' || element.type === 'number' || element.type === 'color') {

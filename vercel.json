@@ -13,7 +13,10 @@
 "routes": [
 {
 "src": "/settings/(.*)",
-"dest": "/public/settings/$1"
+"dest": "/public/settings/$1",
+"headers": {
+"cache-control": "public, max-age=0, must-revalidate"
+}
 },
 {
 "src": "/api/(.*)",
