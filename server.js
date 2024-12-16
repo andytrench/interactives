@@ -11,6 +11,15 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
 }));
 
+// Add near the top of the file, after the middleware setup
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        env: process.env.NODE_ENV
+    });
+});
+
 // Handle API routes here if needed
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });

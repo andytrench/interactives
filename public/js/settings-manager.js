@@ -246,7 +246,9 @@ class SettingsManager {
 
     async loadDefaultSettings() {
         try {
-            console.log('Attempting to load default settings...');
+            const startTime = performance.now();
+            console.log('[Settings] Starting to load default settings...');
+            
             const response = await fetch('/settings/default-settings.json', {
                 headers: {
                     'Cache-Control': 'no-cache',
@@ -254,49 +256,26 @@ class SettingsManager {
                 }
             });
             
+            console.log(`[Settings] Fetch response status: ${response.status}`);
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const text = await response.text();
-            console.log('Raw response:', text);
+            console.log('[Settings] Raw response length:', text.length);
             
             const settings = JSON.parse(text);
-            console.log('Successfully loaded default settings:', settings);
+            console.log('[Settings] Successfully parsed settings:', settings);
             
-            // Ensure all numeric values are properly parsed
-            Object.keys(settings).forEach(key => {
-                if (typeof settings[key] === 'string' && !isNaN(settings[key])) {
-                    settings[key] = parseFloat(settings[key]);
-                }
-            });
-
-            // Scale certain values for display
-            const scaleFactors = {
-                attractionStrength: 100,
-                repulsionStrength: 100,
-                fadeSpeed: 1000,
-                connectionFadeSpeed: 1000
-            };
-
-            Object.keys(scaleFactors).forEach(key => {
-                if (settings[key] !== undefined) {
-                    settings[`${key}Display`] = settings[key] * scaleFactors[key];
-                }
-            });
-
             await this.applySettings(settings);
-            console.log('Settings applied successfully');
+            
+            const endTime = performance.now();
+            console.log(`[Settings] Settings loaded and applied in ${(endTime - startTime).toFixed(2)}ms`);
         } catch (error) {
-            console.error('Error loading default settings:', error);
-            console.error('Error details:', {
-                message: error.message,
-                stack: error.stack
-            });
-            // Don't show notification in production to avoid UI clutter
-            if (process.env.NODE_ENV !== 'production') {
-                this.showNotification('Error loading default settings', 'error');
-            }
+            console.error('[Settings] Error loading default settings:', error);
+            // Fall back to CONFIG defaults
+            console.log('[Settings] Using default CONFIG values');
         }
     }
 }
