@@ -2,7 +2,6 @@
 
 An interactive particle system visualization tool that creates mesmerizing plexus-like effects with customizable patterns and behaviors. This project provides a sandbox environment for experimenting with particle animations, force interactions, and pattern generation.
 
-![Plexus Effect Demo](examples/Red%20Grid%202.jpg)
 
 ## Overview
 
