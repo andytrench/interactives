@@ -11,7 +11,6 @@ class PatternVisualizer {
     }
 
     generatePatternPoints() {
-        console.log('Generating pattern points for:', CONFIG.pattern);
         this.points = [];
         this.lines = [];
         const numPoints = 100; // Number of points to visualize pattern
@@ -33,7 +32,6 @@ class PatternVisualizer {
                 this.generateMandelbrotPattern(numPoints);
                 break;
         }
-        console.log(`Generated ${this.points.length} points and ${this.lines.length} lines`);
     }
 
     generateSpiralPattern(numPoints) {
