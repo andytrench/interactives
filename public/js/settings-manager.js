@@ -1,8 +1,10 @@
 class SettingsManager {
     constructor(controls) {
         this.controls = controls;
+        console.log('SettingsManager constructor called');
         this.setupEventListeners();
         this.loadDefaultSettings();
+        console.log('Loading example presets...');
         this.loadExamplePresets();
         this.setupPresetListeners();
     }
@@ -574,14 +576,18 @@ class SettingsManager {
         try {
             // Get list of JSON files from examples directory
             const response = await fetch('/examples/list');
+            console.log('Examples response:', response);
             const files = await response.json();
+            console.log('Examples files:', files);
             
             // Filter for JSON files and get their base names
             const presetFiles = files
                 .filter(file => file.endsWith('.json'))
                 .slice(0, 4); // Take only first 4 JSON files
+            console.log('Preset files:', presetFiles);
             const presetNames = presetFiles.map(file => file.replace('.json', ''));
-            
+            console.log('Preset names:', presetNames);
+
             // Create the presets HTML
             const presetGrid = document.createElement('div');
             presetGrid.className = 'preset-grid';
