@@ -12,6 +12,10 @@
 ],
 "routes": [
 {
+"src": "/examples/(.*)",
+"dest": "/public/examples/$1"
+},
+{
 "src": "/settings/(.*)",
 "dest": "/public/settings/$1"
 },
