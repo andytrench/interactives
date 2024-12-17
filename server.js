@@ -8,7 +8,7 @@ app.use(express.json());
 app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self'"
+        "default-src 'self'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
     );
     next();
 });
@@ -16,9 +16,25 @@ app.use((req, res, next) => {
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Ensure params directory exists
+// Ensure directories exist
 const paramsDir = path.join(__dirname, 'params');
-fs.mkdir(paramsDir, { recursive: true }).catch(console.error);
+const settingsDir = path.join(__dirname, 'public', 'settings');
+const defaultSettingsPath = path.join(settingsDir, 'default-settings.json');
+
+app.use(async (req, res, next) => {
+    try {
+        await fs.mkdir(paramsDir, { recursive: true });
+        await fs.mkdir(settingsDir, { recursive: true });
+        
+        // Create default settings file if it doesn't exist
+        if (!await fs.access(defaultSettingsPath).catch(() => false)) {
+            await fs.writeFile(defaultSettingsPath, JSON.stringify(CONFIG, null, 2));
+        }
+    } catch (error) {
+        console.error('Error creating directories:', error);
+    }
+    next();
+});
 
 // Save settings endpoint
 app.post('/save-settings', async (req, res) => {
@@ -77,6 +93,9 @@ app.get('/examples/list', async (req, res) => {
 
 // Serve example files - move this before the catch-all route
 app.use('/examples', express.static(path.join(__dirname, 'public', 'examples')));
+
+// Serve settings files
+app.use('/settings', express.static(path.join(__dirname, 'public', 'settings')));
 
 // Add a catch-all route to serve index.html for all routes
 app.get('*', (req, res) => {

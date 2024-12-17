@@ -287,7 +287,7 @@ input[type="color"]::-moz-color-swatch {
 .toggle-settings-button {
     position: fixed;
     top: 10px;
-    left: 395px;
+    right: 10px;
     padding: 8px 15px;
     background: rgba(0, 0, 0, 0.8);
     border: 1px solid #00ffff;
@@ -296,6 +296,9 @@ input[type="color"]::-moz-color-swatch {
     cursor: pointer;
     z-index: 1000;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .toggle-settings-button:hover {
@@ -303,22 +306,21 @@ input[type="color"]::-moz-color-swatch {
 }
 
 .toggle-settings-button .icon {
-    margin-right: 5px;
+    font-size: 16px;
 }
 
 #controls.hidden {
-    transform: translateX(-395px);
+    transform: translateX(-100%);
 }
 
 #controls {
     transition: transform 0.3s ease;
+    z-index: 999;
 }
 
 /* Example Presets Styling */
 .example-presets {
     margin-bottom: 20px;
-    display: block !important;
-    border: 1px solid red;
 }
 
 .preset-grid {

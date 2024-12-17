@@ -27,7 +27,7 @@ class Controls {
             'iterations', 'zoom', 'particleCount', 'fadeSpeed', 
             'connectionFadeSpeed', 'attractionStrength', 'repulsionStrength',
             'particleSize', 'lineThickness', 'connectionDistance',
-            'attractionDistance', 'fullMatrixMode', 'colorfulMode',
+            'attractionDistance', 'attractionMomentum', 'fullMatrixMode', 'colorfulMode',
             'persistentConnections', 'particlesOnTop', 'maxTravelDistance', 'travelSpeed',
             'momentum', 'friction'
         ];
@@ -137,12 +137,11 @@ class Controls {
         if (this.controls.iterations) CONFIG.maxIterations = parseInt(this.controls.iterations.value);
         if (this.controls.zoom) CONFIG.zoom = parseInt(this.controls.zoom.value);
         if (this.controls.particleCount) CONFIG.particleCount = parseInt(this.controls.particleCount.value);
-        if (this.controls.fadeSpeed) {
-            CONFIG.fadeSpeed = parseFloat(this.controls.fadeSpeed.value);
-        }
+        if (this.controls.fadeSpeed) CONFIG.fadeSpeed = parseFloat(this.controls.fadeSpeed.value);
         if (this.controls.connectionFadeSpeed) CONFIG.connectionFadeSpeed = parseInt(this.controls.connectionFadeSpeed.value) / 1000;
-        if (this.controls.attractionStrength) CONFIG.attractionStrength = parseInt(this.controls.attractionStrength.value) / 100;
-        if (this.controls.repulsionStrength) CONFIG.repulsionStrength = parseInt(this.controls.repulsionStrength.value) / 100;
+        if (this.controls.attractionStrength) CONFIG.attractionStrength = parseFloat(this.controls.attractionStrength.value);
+        if (this.controls.attractionMomentum) CONFIG.attractionMomentum = parseFloat(this.controls.attractionMomentum.value);
+        if (this.controls.repulsionStrength) CONFIG.repulsionStrength = parseFloat(this.controls.repulsionStrength.value);
         if (this.controls.particleSize) CONFIG.particleSize = parseFloat(this.controls.particleSize.value);
         if (this.controls.lineThickness) CONFIG.lineThickness = parseFloat(this.controls.lineThickness.value);
         if (this.controls.connectionDistance) CONFIG.connectionDistance = parseInt(this.controls.connectionDistance.value);

@@ -1,9 +1,12 @@
 class SettingsManager {
-    constructor(controls) {
+    constructor(controls, onSettingsLoaded) {
         this.controls = controls;
+        this.onSettingsLoaded = onSettingsLoaded;
         console.log('SettingsManager constructor called');
         this.setupEventListeners();
-        this.loadDefaultSettings();
+        this.loadDefaultSettings().then(() => {
+            if (this.onSettingsLoaded) this.onSettingsLoaded();
+        });
         console.log('Loading example presets...');
         this.loadExamplePresets();
         this.setupPresetListeners();
@@ -85,6 +88,7 @@ class SettingsManager {
                 // Forces
                 attractionStrength: CONFIG.attractionStrength,
                 attractionDistance: CONFIG.attractionDistance,
+                attractionMomentum: CONFIG.attractionMomentum,
                 repulsionStrength: CONFIG.repulsionStrength,
 
                 // Mandelbrot
@@ -176,7 +180,9 @@ class SettingsManager {
 
             // Update UI
             this.addSettingToList(settingsName);
-            this.displayThumbnail(thumbnailCanvas.toDataURL('image/jpeg', 0.9));
+            // Get thumbnail for display from the same canvas
+            const displayThumbnail = thumbnailCanvas.toDataURL('image/jpeg', 0.9);
+            this.displayThumbnail(displayThumbnail);
             this.showNotification('Settings and thumbnail saved successfully!', 'success');
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -262,6 +268,7 @@ class SettingsManager {
             // Forces
             attractionStrength: true,
             attractionDistance: true,
+            attractionMomentum: true,
             repulsionStrength: true,
 
             // Mandelbrot
@@ -403,6 +410,8 @@ class SettingsManager {
                     CONFIG[key] = parseFloat(settings[key].toFixed(4));
                 } else if (key === 'attractionStrength' || key === 'repulsionStrength') {
                     CONFIG[key] = settings[key];
+                } else if (key === 'attractionMomentum') {
+                    CONFIG[key] = parseFloat(settings[key]);
                 } else {
                     CONFIG[key] = settings[key];
                 }
@@ -418,7 +427,7 @@ class SettingsManager {
             if (element) {
                 let value = settings[key];
                 // Special handling for attraction and repulsion strength UI values
-                if (key === 'attractionStrength' || key === 'repulsionStrength') {
+                if (key === 'attractionStrength' || key === 'repulsionStrength' || key === 'attractionMomentum') {
                     value = value * 100; // Convert back to UI range
                 }
                 
@@ -511,43 +520,18 @@ class SettingsManager {
     }
 
     async loadDefaultSettings() {
-        const startTime = performance.now();
-        console.log(`[Settings] Environment: ${process.env.NODE_ENV}`);
-        console.log('[Settings] Starting to load default settings...');
-        
         try {
-            const settingsUrl = '/settings/default-settings.json';
-            console.log(`[Settings] Fetching from: ${settingsUrl}`);
-            
-            const response = await fetch(settingsUrl, {
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
-            
-            console.log(`[Settings] Response status: ${response.status}`);
+            const response = await fetch('/loadSet/Red Grid 2.json');
             
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Failed to load default settings: ${response.status}`);
             }
-
-            const text = await response.text();
-            console.log(`[Settings] Received ${text.length} bytes`);
-            
-            const settings = JSON.parse(text);
-            console.log('[Settings] Parsed settings:', settings);
-            
+            const settings = await response.json();
             await this.applySettings(settings);
-            
-            const endTime = performance.now();
-            console.log(`[Settings] Settings applied in ${(endTime - startTime).toFixed(2)}ms`);
-            
-            // Verify settings were applied
-            console.log('[Settings] Current CONFIG:', CONFIG);
+            return true;
         } catch (error) {
-            console.error('[Settings] Error:', error);
-            console.log('[Settings] Using default CONFIG');
+            console.error('Error loading default settings:', error);
+            throw new Error('Failed to load required settings file');
         }
     }
 

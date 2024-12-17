@@ -1,21 +1,23 @@
 class Renderer {
-    constructor() {
+    constructor(onReady) {
         this.canvas = document.getElementById('particleCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.particles = [];
         this.controls = new Controls();
         this.patternVisualizer = new PatternVisualizer(this.canvas, this.ctx);
-        this.settingsManager = new SettingsManager(this.controls);
+        this.settingsManager = new SettingsManager(this.controls, () => {
+            // Initialize everything after settings are loaded
+            this.setupCanvas();
+            this.initParticles();
+            this.setupPatternControls();
+            this.setupColorUpdateListener();
+            this.setupPatternChangeListener();
+            this.animate();
+            if (onReady) onReady();
+        });
         this.patternScaleTimeout = null;
         this.particleCountTimeout = null;
         
-        this.setupCanvas();
-        this.initParticles();
-        this.setupPatternControls();
-        this.setupColorUpdateListener();
-        this.setupPatternChangeListener();
-        this.animate();
-
         this.lastParticleSpawnTime = 0;
         this.spawnRate = 10; // Spawn X particles per frame
     }

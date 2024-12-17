@@ -11,7 +11,6 @@ class Particle {
         this.alpha = 0;
         this.life = initialLife;
         this.maxLife = maxLife;
-        this.distanceTraveled = 0;  // Track total distance traveled
         
         // Add momentum properties
         this.targetX = x;
@@ -21,24 +20,14 @@ class Particle {
         
         // Random initial velocity with momentum
         const angle = Math.random() * Math.PI * 2;
-        this.vx = Math.cos(angle) * CONFIG.travelSpeed;
-        this.vy = Math.sin(angle) * CONFIG.travelSpeed;
+        this.vx = Math.cos(angle) * CONFIG.travelSpeed * CONFIG.momentum;
+        this.vy = Math.sin(angle) * CONFIG.travelSpeed * CONFIG.momentum;
     }
 
-    calculateAlpha() {
-        const fadeInThreshold = this.maxLife * this.fadeInDuration;
-        const fadeOutThreshold = this.maxLife * (1 - this.fadeOutDuration);
-
-        if (this.life < fadeInThreshold) {
-            // Fading in
-            return this.life / fadeInThreshold;
-        } else if (this.life > fadeOutThreshold) {
-            // Fading out
-            return (this.maxLife - this.life) / (this.maxLife * this.fadeOutDuration);
-        } else {
-            // Fully visible
-            return 1;
-        }
+    updateAlpha() {
+        // Update life and alpha
+        this.life += CONFIG.fadeSpeed;
+        this.alpha = Math.min(1, Math.min(this.life, 1 - this.life));
     }
 
     update(mouse, canvas) {
@@ -49,30 +38,59 @@ class Particle {
         this.ax = 0;
         this.ay = 0;
 
-        // Mouse interaction with momentum
+        // Update alpha based on life
+        this.updateAlpha();
+        
+        let distance = Infinity; // Initialize distance
+        
+        // Calculate distance from start position
+        const distanceFromStart = Math.sqrt(
+            Math.pow(this.x - this.startX, 2) + 
+            Math.pow(this.y - this.startY, 2)
+        );
+        
+        // Calculate travel speed based on distance from start
+        const speedScale = Math.max(0, 1 - (distanceFromStart / CONFIG.maxTravelDistance));
+        const currentSpeed = CONFIG.travelSpeed * speedScale * CONFIG.momentum;
+        
+        // Handle mouse interaction
         if (mouse.x !== null && mouse.y !== null) {
             const dx = mouse.x - this.x;
             const dy = mouse.y - this.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
+            distance = Math.sqrt(dx * dx + dy * dy);
+            
             if (distance < CONFIG.attractionDistance) {
-                const force = (1 - distance / CONFIG.attractionDistance);
+                // Calculate base attraction force
+                const force = CONFIG.attractionStrength;
                 
-                // Apply attraction
-                const attractionForce = CONFIG.attractionStrength * force;
-                this.ax += (dx / distance) * attractionForce;
-                this.ay += (dy / distance) * attractionForce;
+                // Apply attraction with momentum
+                const newVx = (dx / distance) * force;
+                const newVy = (dy / distance) * force;
                 
-                // Apply repulsion (note the negative force and different scaling)
-                const repulsionForce = CONFIG.repulsionStrength * (1 - force);
-                this.ax -= (dx / distance) * repulsionForce;
-                this.ay -= (dy / distance) * repulsionForce;
+                // Scale momentum effect by the configured value
+                const momentumScale = CONFIG.attractionMomentum;
+                const momentumVx = this.vx * momentumScale;
+                const momentumVy = this.vy * momentumScale;
+                
+                // Add new velocity from attraction
+                this.vx = momentumVx + newVx;
+                this.vy = momentumVy + newVy;
+                
+                // Apply repulsion if enabled
+                if (CONFIG.repulsionStrength > 0) {
+                    const repulsionForce = CONFIG.repulsionStrength * (1 - distance / CONFIG.attractionDistance);
+                    this.vx -= (dx / distance) * repulsionForce;
+                    this.vy -= (dy / distance) * repulsionForce;
+                }
             }
         }
 
-        // Apply momentum (now can go up to 2.0)
-        this.vx = this.vx * CONFIG.momentum + this.ax;
-        this.vy = this.vy * CONFIG.momentum + this.ay;
+        // Apply general momentum (for non-cursor movement)
+        if (distance >= CONFIG.attractionDistance) {
+            // Scale velocity by current speed and momentum
+            this.vx = this.vx * CONFIG.momentum + this.ax * currentSpeed;
+            this.vy = this.vy * CONFIG.momentum + this.ay * currentSpeed;
+        }
 
         // Apply friction
         this.vx *= (1 - CONFIG.friction);
@@ -82,23 +100,18 @@ class Particle {
         this.x += this.vx;
         this.y += this.vy;
 
-        // Calculate distance traveled
-        const frameDist = Math.sqrt(
-            Math.pow(this.x - oldX, 2) + 
-            Math.pow(this.y - oldY, 2)
-        );
-        this.distanceTraveled += frameDist;
-
         // Max travel distance behavior with momentum
-        if (this.distanceTraveled > CONFIG.maxTravelDistance) {
+        if (distanceFromStart > CONFIG.maxTravelDistance) {
             // Calculate return force to starting position
             const returnDx = this.startX - this.x;
             const returnDy = this.startY - this.y;
             const returnDist = Math.sqrt(returnDx * returnDx + returnDy * returnDy);
             
             if (returnDist > 0) {
-                this.ax += (returnDx / returnDist) * 0.01;
-                this.ay += (returnDy / returnDist) * 0.01;
+                // Apply stronger return force based on how far past max distance
+                const returnForce = 0.05 * (distanceFromStart - CONFIG.maxTravelDistance) / CONFIG.maxTravelDistance;
+                this.ax += (returnDx / returnDist) * returnForce;
+                this.ay += (returnDy / returnDist) * returnForce;
             }
         }
 
@@ -111,10 +124,6 @@ class Particle {
             this.vy *= -CONFIG.momentum;
             this.y = this.y < 0 ? 0 : canvas.height;
         }
-
-        // Update life and alpha
-        this.life += CONFIG.fadeSpeed;
-        this.alpha = Math.min(1, Math.min(this.life, 1 - this.life));
 
         return this.life <= this.maxLife;
     }
