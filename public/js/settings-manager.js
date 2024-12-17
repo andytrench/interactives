@@ -576,16 +576,22 @@ class SettingsManager {
         try {
             // Get list of JSON files from examples directory
             const response = await fetch('/examples/list');
-            console.log('Examples response:', response);
+            if (!response.ok) {
+                throw new Error(`Failed to load examples: ${response.status}`);
+            }
             const files = await response.json();
-            console.log('Examples files:', files);
+            
+            if (!files || files.length === 0) {
+                console.log('No example files found');
+                return;
+            }
             
             // Filter for JSON files and get their base names
             const presetFiles = files
                 .filter(file => file.endsWith('.json'))
                 .slice(0, 4); // Take only first 4 JSON files
-            console.log('Preset files:', presetFiles);
             const presetNames = presetFiles.map(file => file.replace('.json', ''));
+            console.log('Preset files:', presetFiles);
             console.log('Preset names:', presetNames);
 
             // Create the presets HTML

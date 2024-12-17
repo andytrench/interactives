@@ -62,17 +62,20 @@ app.get('/examples/list', async (req, res) => {
     try {
         const examplesDir = path.join(__dirname, 'public', 'examples');
         console.log('Examples directory:', examplesDir);
+        // Ensure examples directory exists
+        await fs.mkdir(examplesDir, { recursive: true });
         const files = await fs.readdir(examplesDir);
         console.log('Found files:', files);
         res.json(files);
     } catch (error) {
         console.error('Error listing examples:', error);
         console.error('Full error:', error.stack);
-        res.status(500).json({ error: 'Failed to list examples' });
+        // Return empty array instead of error if directory is empty or doesn't exist
+        res.json([]);
     }
 });
 
-// Serve example files
+// Serve example files - move this before the catch-all route
 app.use('/examples', express.static(path.join(__dirname, 'public', 'examples')));
 
 // Add a catch-all route to serve index.html for all routes

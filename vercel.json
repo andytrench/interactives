@@ -12,6 +12,10 @@
 ],
 "routes": [
 {
+"src": "/examples/list",
+"dest": "/server.js"
+},
+{
 "src": "/examples/(.*)",
 "dest": "/public/examples/$1"
 },
