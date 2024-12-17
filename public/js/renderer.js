@@ -6,11 +6,14 @@ class Renderer {
         this.controls = new Controls();
         this.patternVisualizer = new PatternVisualizer(this.canvas, this.ctx);
         this.settingsManager = new SettingsManager(this.controls);
+        this.patternScaleTimeout = null;
+        this.particleCountTimeout = null;
         
         this.setupCanvas();
         this.initParticles();
         this.setupPatternControls();
         this.setupColorUpdateListener();
+        this.setupPatternChangeListener();
         this.animate();
 
         this.lastParticleSpawnTime = 0;
@@ -142,6 +145,20 @@ class Renderer {
         this.ctx.fillStyle = 'rgba(0, 0, 0, 1)';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        if (CONFIG.particlesOnTop) {
+            this.handleEnhancedConnections();
+            this.drawParticles();
+        } else {
+            this.drawParticles();
+            this.handleEnhancedConnections();
+        }
+
+        this.patternVisualizer.draw();
+        this.maintainParticleCount();
+        requestAnimationFrame(this.animate);
+    }
+
+    drawParticles() {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const particle = this.particles[i];
             const isAlive = particle.update(this.controls.mouse, this.canvas);
@@ -153,12 +170,6 @@ class Renderer {
                 particle.draw(this.ctx);
             }
         }
-
-        this.handleEnhancedConnections();
-        this.patternVisualizer.draw();
-
-        this.maintainParticleCount();
-        requestAnimationFrame(this.animate);
     }
 
     handleEnhancedConnections() {
@@ -223,6 +234,71 @@ class Renderer {
                 }
             });
         });
+    }
+
+    setupPatternChangeListener() {
+        // Listen for pattern changes
+        document.getElementById('pattern').addEventListener('change', () => {
+            console.log('Pattern changed, resetting particles...');
+            this.resetPattern();
+        });
+
+        // Listen for pattern scale changes
+        const patternScale = document.getElementById('patternScale');
+        patternScale.addEventListener('input', () => {
+            console.log('Pattern scale changed, resetting particles...');
+            // Use debounce to avoid too many resets while sliding
+            if (this.patternScaleTimeout) {
+                clearTimeout(this.patternScaleTimeout);
+            }
+            this.patternScaleTimeout = setTimeout(() => {
+                this.resetPattern();
+            }, 100); // Small delay to avoid performance issues while sliding
+        });
+
+        // Listen for particle count changes
+        const particleCount = document.getElementById('particleCount');
+        particleCount.addEventListener('input', () => {
+            console.log('Particle count changed, resetting particles...');
+            // Use debounce to avoid too many resets while sliding
+            if (this.particleCountTimeout) {
+                clearTimeout(this.particleCountTimeout);
+            }
+            this.particleCountTimeout = setTimeout(() => {
+                this.resetPattern();
+            }, 100); // Small delay to avoid performance issues while sliding
+        });
+
+        // Listen for settings updates
+        window.addEventListener('settingsUpdated', () => {
+            console.log('Settings updated, resetting pattern...');
+            this.resetPatternWithDelay();
+        });
+    }
+
+    resetPattern() {
+        console.log('Resetting pattern and particles');
+        // Reset pattern visualizer
+        this.patternVisualizer.generatePatternPoints();
+        
+        // Clear existing particles
+        this.particles = [];
+        
+        // Create new particles with updated settings
+        for (let i = 0; i < CONFIG.particleCount; i++) {
+            this.createParticle();
+        }
+        
+        console.log('Pattern reset complete');
+    }
+
+    resetPatternWithDelay() {
+        if (this.resetTimeout) {
+            clearTimeout(this.resetTimeout);
+        }
+        this.resetTimeout = setTimeout(() => {
+            this.resetPattern();
+        }, 100);
     }
 }
 

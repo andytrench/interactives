@@ -28,7 +28,7 @@ class Controls {
             'connectionFadeSpeed', 'attractionStrength', 'repulsionStrength',
             'particleSize', 'lineThickness', 'connectionDistance',
             'attractionDistance', 'fullMatrixMode', 'colorfulMode',
-            'persistentConnections', 'maxTravelDistance', 'travelSpeed',
+            'persistentConnections', 'particlesOnTop', 'maxTravelDistance', 'travelSpeed',
             'momentum', 'friction'
         ];
 
@@ -150,6 +150,7 @@ class Controls {
         if (this.controls.fullMatrixMode) CONFIG.fullMatrixMode = this.controls.fullMatrixMode.checked;
         if (this.controls.colorfulMode) CONFIG.colorfulMode = this.controls.colorfulMode.checked;
         if (this.controls.persistentConnections) CONFIG.persistentConnections = this.controls.persistentConnections.checked;
+        if (this.controls.particlesOnTop) CONFIG.particlesOnTop = this.controls.particlesOnTop.checked;
         if (this.controls.maxTravelDistance) {
             CONFIG.maxTravelDistance = parseInt(this.controls.maxTravelDistance.value);
         }

@@ -3,7 +3,7 @@ const CONFIG = {
     // Particle settings
     particleCount: 2200,
     particleSize: 8.8,
-    fadeSpeed: 0.001,
+    fadeSpeed: 0.001,  // Range: 0.0001 to 0.01
     
     // Connection settings
     connectionDistance: 190,
@@ -25,6 +25,7 @@ const CONFIG = {
     fullMatrixMode: false,
     colorfulMode: false,
     persistentConnections: false,
+    particlesOnTop: true,
     
     // Visual settings
     glowIntensity: 0.5,
@@ -54,6 +55,6 @@ const CONFIG = {
     // Particle movement settings
     maxTravelDistance: 100,  // Maximum distance a particle can travel
     travelSpeed: 0.5,       // Speed at which particles travel
-    momentum: 0.900,        // Default momentum
+    momentum: 0.900,        // Default momentum (range: 0.900 to 1.001)
     friction: 0.02,         // How quickly particles slow down
 }; 

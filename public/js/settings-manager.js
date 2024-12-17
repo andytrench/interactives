@@ -3,6 +3,8 @@ class SettingsManager {
         this.controls = controls;
         this.setupEventListeners();
         this.loadDefaultSettings();
+        this.loadExamplePresets();
+        this.setupPresetListeners();
     }
 
     setupEventListeners() {
@@ -20,6 +22,36 @@ class SettingsManager {
         }
     }
 
+    setupPresetListeners() {
+        const presetItems = document.querySelectorAll('.preset-item');
+        presetItems.forEach(item => {
+            item.addEventListener('click', async () => {
+                const presetName = item.dataset.preset;
+                try {
+                    console.log(`Loading preset: ${presetName}`);
+                    
+                    // Remove active class from all presets
+                    presetItems.forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked preset
+                    item.classList.add('active');
+                    
+                    // Load the preset settings file
+                    const response = await fetch(`/examples/${presetName}.json`);
+                    if (!response.ok) throw new Error('Failed to load preset');
+                    
+                    const settings = await response.json();
+                    await this.applySettings(settings);
+                    
+                    this.showNotification(`Loaded ${presetName} preset`, 'success');
+                } catch (error) {
+                    console.error('Error loading preset:', error);
+                    this.showNotification(`Failed to load ${presetName} preset`, 'error');
+                }
+            });
+        });
+    }
+
     loadSettingsByName(name) {
         // This would be used if we had server-side storage
         // For now, we'll just show a notification
@@ -32,6 +64,69 @@ class SettingsManager {
             const jsonFilename = `${settingsName}.json`;
             const imageFilename = `${settingsName}.jpg`;
             
+            // Create complete settings object
+            const settings = {
+                // Particle Properties
+                particleCount: CONFIG.particleCount,
+                particleSize: CONFIG.particleSize,
+                fadeSpeed: CONFIG.fadeSpeed,
+                maxTravelDistance: CONFIG.maxTravelDistance,
+                travelSpeed: CONFIG.travelSpeed,
+                momentum: CONFIG.momentum,
+                friction: CONFIG.friction,
+
+                // Connection Properties
+                connectionDistance: CONFIG.connectionDistance,
+                lineThickness: CONFIG.lineThickness,
+                connectionFadeSpeed: CONFIG.connectionFadeSpeed,
+
+                // Forces
+                attractionStrength: CONFIG.attractionStrength,
+                attractionDistance: CONFIG.attractionDistance,
+                repulsionStrength: CONFIG.repulsionStrength,
+
+                // Mandelbrot
+                maxIterations: CONFIG.maxIterations,
+                zoom: CONFIG.zoom,
+                seahorseX: CONFIG.seahorseX,
+                seahorseY: CONFIG.seahorseY,
+
+                // Visual Modes
+                fullMatrixMode: CONFIG.fullMatrixMode,
+                colorfulMode: CONFIG.colorfulMode,
+                persistentConnections: CONFIG.persistentConnections,
+                particlesOnTop: CONFIG.particlesOnTop,
+
+                // Colors
+                particleColor: CONFIG.particleColor,
+                particleOpacity: CONFIG.particleOpacity,
+                lineColor: CONFIG.lineColor,
+                lineOpacity: CONFIG.lineOpacity,
+                dotColor: CONFIG.dotColor,
+                dotOpacity: CONFIG.dotOpacity,
+
+                // Pattern Generator
+                pattern: CONFIG.pattern,
+                patternScale: CONFIG.patternScale,
+                patternDistance: CONFIG.patternDistance,
+
+                // Visual Settings
+                glowIntensity: CONFIG.glowIntensity,
+                minOpacity: CONFIG.minOpacity,
+                maxOpacity: CONFIG.maxOpacity,
+
+                // Particle Lifecycle
+                particleSpawnRate: CONFIG.particleSpawnRate,
+                minParticleLife: CONFIG.minParticleLife,
+                maxParticleLife: CONFIG.maxParticleLife,
+                fadeInDuration: CONFIG.fadeInDuration,
+                fadeOutDuration: CONFIG.fadeOutDuration,
+
+                // Metadata
+                timestamp: new Date().toISOString(),
+                name: settingsName,
+            };
+
             // Create thumbnail
             const canvas = document.getElementById('particleCanvas');
             const thumbnailCanvas = document.createElement('canvas');
@@ -50,8 +145,8 @@ class SettingsManager {
             
             // Draw cropped and scaled version
             ctx.drawImage(canvas, 
-                centerX, centerY, thumbSize, thumbSize,  // source coords and size
-                0, 0, thumbSize, thumbSize               // dest coords and size
+                centerX, centerY, thumbSize, thumbSize,
+                0, 0, thumbSize, thumbSize
             );
             
             // Save thumbnail as separate file
@@ -65,17 +160,6 @@ class SettingsManager {
                 document.body.removeChild(imageLink);
                 URL.revokeObjectURL(imageUrl);
             }, 'image/jpeg', 0.9);
-            
-            // Convert thumbnail to base64 for JSON
-            const thumbnailData = thumbnailCanvas.toDataURL('image/jpeg', 0.9);
-            
-            // Collect all current settings
-            const settings = {
-                ...CONFIG,
-                timestamp: new Date().toISOString(),
-                name: settingsName,
-                thumbnail: thumbnailData
-            };
 
             // Save JSON file
             const jsonBlob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
@@ -90,7 +174,7 @@ class SettingsManager {
 
             // Update UI
             this.addSettingToList(settingsName);
-            this.displayThumbnail(thumbnailData);
+            this.displayThumbnail(thumbnailCanvas.toDataURL('image/jpeg', 0.9));
             this.showNotification('Settings and thumbnail saved successfully!', 'success');
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -154,33 +238,133 @@ class SettingsManager {
         fileInput.click();
     }
 
-    applySettings(settings) {
+    async applySettings(settings) {
         console.log('Applying settings:', settings);
         
+        // Define all possible parameters to ensure complete loading
+        const allParameters = {
+            // Particle Properties
+            particleCount: true,
+            particleSize: true,
+            fadeSpeed: true,
+            maxTravelDistance: true,
+            travelSpeed: true,
+            momentum: true,
+            friction: true,
+
+            // Connection Properties
+            connectionDistance: true,
+            lineThickness: true,
+            connectionFadeSpeed: true,
+
+            // Forces
+            attractionStrength: true,
+            attractionDistance: true,
+            repulsionStrength: true,
+
+            // Mandelbrot
+            maxIterations: true,
+            zoom: true,
+            seahorseX: true,
+            seahorseY: true,
+
+            // Visual Modes
+            fullMatrixMode: true,
+            colorfulMode: true,
+            persistentConnections: true,
+            particlesOnTop: true,
+
+            // Colors
+            particleColor: true,
+            particleOpacity: true,
+            lineColor: true,
+            lineOpacity: true,
+            dotColor: true,
+            dotOpacity: true,
+
+            // Pattern Generator
+            pattern: true,
+            patternScale: true,
+            patternDistance: true,
+
+            // Visual Settings
+            glowIntensity: true,
+            minOpacity: true,
+            maxOpacity: true,
+
+            // Particle Lifecycle
+            particleSpawnRate: true,
+            minParticleLife: true,
+            maxParticleLife: true,
+            fadeInDuration: true,
+            fadeOutDuration: true
+        };
+
+        // Log any missing parameters
+        Object.keys(allParameters).forEach(param => {
+            if (settings[param] === undefined) {
+                console.warn(`Missing parameter in settings: ${param}, using default value: ${CONFIG[param]}`);
+            }
+        });
+
         // First, update CONFIG object
-        this.updateConfigFromSettings(settings);
+        Object.keys(allParameters).forEach(param => {
+            if (settings[param] !== undefined) {
+                // Special handling for momentum to ensure it doesn't exceed max
+                if (param === 'momentum') {
+                    CONFIG[param] = Math.min(parseFloat(settings[param]), 1.001);
+                } else if (param === 'attractionStrength' || param === 'repulsionStrength') {
+                    CONFIG[param] = settings[param];
+                } else {
+                    CONFIG[param] = settings[param];
+                }
+                console.log(`Set ${param} to:`, CONFIG[param]);
+            }
+        });
         
         // Then update UI
         this.updateUIControls(settings);
         
-        // Trigger global update event
+        // Dispatch event for any other components that need to update
         window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
+    }
+
+    async resetPatternWithRetry(maxAttempts = 3, delay = 500) {
+        console.log('Attempting pattern reset...');
         
-        // Add a small delay to ensure all settings are applied before reset
-        setTimeout(() => {
-            // Force pattern refresh and particle reset
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             if (window.renderer) {
-                // If pattern visualizer exists, update it first
-                if (window.renderer.patternVisualizer) {
+                try {
+                    console.log(`Pattern reset attempt ${attempt}`);
+                    
+                    // Wait for a short delay
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    
+                    // Reset pattern visualizer
                     window.renderer.patternVisualizer.generatePatternPoints();
+                    
+                    // Clear existing particles
+                    window.renderer.particles = [];
+                    
+                    // Create new particles with updated settings
+                    for (let i = 0; i < CONFIG.particleCount; i++) {
+                        window.renderer.createParticle();
+                    }
+                    
+                    console.log('Pattern reset successful');
+                    return true;
+                } catch (error) {
+                    console.error(`Pattern reset attempt ${attempt} failed:`, error);
+                    if (attempt === maxAttempts) {
+                        console.error('Pattern reset failed after all attempts');
+                        return false;
+                    }
                 }
-                
-                // Then reset all particles with new settings
-                window.renderer.initParticles();
-                
-                console.log('Pattern and particles reset after settings load');
+            } else {
+                await new Promise(resolve => setTimeout(resolve, delay));
             }
-        }, 100); // Small delay to ensure settings are fully applied
+        }
+        return false;
     }
 
     updateConfigFromSettings(settings) {
@@ -209,66 +393,77 @@ class SettingsManager {
     updateUIControls(settings) {
         console.log('Updating UI with settings:', settings);
         
-        // Scale factors for certain values
-        const scaleFactors = {
-            attractionStrength: 100,  // 0.04 -> 4
-            repulsionStrength: 100,   // 0.02 -> 2
-            fadeSpeed: 10000,         // 0.0001 -> 1
-            connectionFadeSpeed: 1000  // 0.001 -> 1
-        };
+        // First, ensure all CONFIG values are updated
+        Object.keys(settings).forEach(key => {
+            if (key in CONFIG) {
+                // Special handling for different types of values
+                if (key === 'fadeSpeed') {
+                    CONFIG[key] = parseFloat(settings[key].toFixed(4));
+                } else if (key === 'attractionStrength' || key === 'repulsionStrength') {
+                    CONFIG[key] = settings[key];
+                } else {
+                    CONFIG[key] = settings[key];
+                }
+                console.log(`Updated CONFIG.${key} to:`, CONFIG[key]);
+            }
+        });
         
-        // Update all UI elements
-        Object.keys(CONFIG).forEach(key => {
+        // Then update all UI elements
+        Object.keys(settings).forEach(key => {
             const element = document.getElementById(key);
             const valueElement = document.getElementById(`${key}Value`);
             
             if (element) {
-                let value = settings[key] !== undefined ? settings[key] : CONFIG[key];
-                
-                // Scale up values for slider display if needed
-                if (scaleFactors[key]) {
-                    value = value * scaleFactors[key];
+                let value = settings[key];
+                // Special handling for attraction and repulsion strength UI values
+                if (key === 'attractionStrength' || key === 'repulsionStrength') {
+                    value = value * 100; // Convert back to UI range
                 }
+                
+                console.log(`Updating UI element ${key} to:`, value);
                 
                 if (element.type === 'checkbox') {
                     element.checked = value;
-                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                    element.dispatchEvent(new Event('change'));
                 } else if (element.type === 'range' || element.type === 'number') {
                     element.value = value;
-                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    element.dispatchEvent(new Event('input'));
                 } else if (element.type === 'color') {
                     element.value = value;
-                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    element.dispatchEvent(new Event('input'));
                 } else if (element.tagName === 'SELECT') {
                     element.value = value;
-                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                    element.dispatchEvent(new Event('change'));
                 }
                 
-                // Update value display
+                // Update value display if it exists
                 if (valueElement) {
                     valueElement.textContent = value;
                 }
             }
         });
-
-        // Update color pickers and their opacities
+        
+        // Force refresh of color controls
         ['particle', 'line', 'dot'].forEach(type => {
-            const colorPicker = document.getElementById(`${type}ColorPicker`);
-            const opacityPicker = document.getElementById(`${type}OpacityPicker`);
+            const colorKey = `${type}Color`;
+            const opacityKey = `${type}Opacity`;
             
-            if (colorPicker && settings[`${type}Color`]) {
-                colorPicker.value = settings[`${type}Color`];
-                colorPicker.dispatchEvent(new Event('input', { bubbles: true }));
+            if (settings[colorKey]) {
+                const colorPicker = document.getElementById(`${type}ColorPicker`);
+                if (colorPicker) {
+                    colorPicker.value = settings[colorKey];
+                    colorPicker.dispatchEvent(new Event('input'));
+                }
             }
             
-            if (opacityPicker && settings[`${type}Opacity`] !== undefined) {
-                opacityPicker.value = settings[`${type}Opacity`];
-                opacityPicker.dispatchEvent(new Event('input', { bubbles: true }));
+            if (settings[opacityKey] !== undefined) {
+                const opacityPicker = document.getElementById(`${type}OpacityPicker`);
+                if (opacityPicker) {
+                    opacityPicker.value = settings[opacityKey];
+                    opacityPicker.dispatchEvent(new Event('input'));
+                }
             }
         });
-
-        // Trigger global update
-        window.dispatchEvent(new CustomEvent('settingsUpdated', { detail: settings }));
     }
 
     flattenSettings(settings) {
@@ -372,6 +567,57 @@ class SettingsManager {
         const settingsButtons = document.querySelector('.settings-buttons');
         if (!document.getElementById('settingsThumbnail')) {
             settingsButtons.appendChild(container);
+        }
+    }
+
+    async loadExamplePresets() {
+        try {
+            // Get list of JSON files from examples directory
+            const response = await fetch('/examples/list');
+            const files = await response.json();
+            
+            // Filter for JSON files and get their base names
+            const presetFiles = files
+                .filter(file => file.endsWith('.json'))
+                .slice(0, 4); // Take only first 4 JSON files
+            const presetNames = presetFiles.map(file => file.replace('.json', ''));
+            
+            // Create the presets HTML
+            const presetGrid = document.createElement('div');
+            presetGrid.className = 'preset-grid';
+            
+            for (const name of presetNames) {
+                const presetItem = document.createElement('div');
+                presetItem.className = 'preset-item';
+                presetItem.dataset.preset = name;
+                
+                // Check if matching thumbnail exists
+                const thumbnailName = files.find(f => 
+                    f === `${name}.jpg` || 
+                    f === `${name}.png`
+                );
+                const thumbnailPath = thumbnailName ? 
+                    `/examples/${thumbnailName}` : 
+                    '/examples/default.jpg';
+                
+                presetItem.innerHTML = `
+                    <img src="${thumbnailPath}" alt="Preset ${name}" onerror="this.src='/examples/default.jpg'">
+                    <span>Preset ${name.replace(/^\d+_/, '')}</span>
+                `;
+                
+                presetGrid.appendChild(presetItem);
+            }
+            
+            // Add to page
+            const presetsContainer = document.querySelector('.example-presets');
+            presetsContainer.innerHTML = '<h3>Example Presets</h3>';
+            presetsContainer.appendChild(presetGrid);
+            
+            // Setup listeners after adding to DOM
+            this.setupPresetListeners();
+            
+        } catch (error) {
+            console.error('Error loading example presets:', error);
         }
     }
 }

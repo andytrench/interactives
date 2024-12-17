@@ -11,6 +11,7 @@ class PatternVisualizer {
     }
 
     generatePatternPoints() {
+        console.log('Generating pattern points for:', CONFIG.pattern);
         this.points = [];
         this.lines = [];
         const numPoints = 100; // Number of points to visualize pattern
@@ -32,6 +33,7 @@ class PatternVisualizer {
                 this.generateMandelbrotPattern(numPoints);
                 break;
         }
+        console.log(`Generated ${this.points.length} points and ${this.lines.length} lines`);
     }
 
     generateSpiralPattern(numPoints) {
@@ -63,16 +65,26 @@ class PatternVisualizer {
         // Generate concentric circles
         for (let i = 0; i < 8; i++) {
             const radius = (i + 1) * maxRadius / 8;
-            for (let j = 0; j < numPoints/8; j++) {
-                const angle = (j / (numPoints/8)) * Math.PI * 2;
+            const pointsInCircle = Math.floor(numPoints/8);
+            
+            for (let j = 0; j <= pointsInCircle; j++) {  // Note: <= to close the circle
+                const angle = (j / pointsInCircle) * Math.PI * 2;
                 const x = centerX + Math.cos(angle) * radius;
                 const y = centerY + Math.sin(angle) * radius;
                 this.points.push({x, y});
                 
+                // Connect points to form circle
                 if (j > 0) {
                     this.lines.push({
                         from: this.points[this.points.length-2],
                         to: this.points[this.points.length-1]
+                    });
+                }
+                // Close the circle
+                if (j === pointsInCircle) {
+                    this.lines.push({
+                        from: this.points[this.points.length-1],
+                        to: this.points[this.points.length-pointsInCircle]
                     });
                 }
             }
@@ -80,28 +92,32 @@ class PatternVisualizer {
     }
 
     generateGridPattern() {
-        const cellSize = 50 * CONFIG.patternScale;
-        const cols = Math.floor(this.canvas.width / cellSize);
-        const rows = Math.floor(this.canvas.height / cellSize);
+        const baseSize = 50 * CONFIG.patternScale;
+        const cols = Math.max(2, Math.ceil(this.canvas.width / baseSize));
+        const rows = Math.max(2, Math.ceil(this.canvas.height / baseSize));
+        
+        // Adjust cell size to fill canvas
+        const cellWidth = this.canvas.width / cols;
+        const cellHeight = this.canvas.height / rows;
 
         // Generate grid points
-        for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-                const x = col * cellSize + cellSize/2;
-                const y = row * cellSize + cellSize/2;
+        for (let row = 0; row <= rows; row++) {
+            for (let col = 0; col <= cols; col++) {
+                const x = col * cellWidth;
+                const y = row * cellHeight;
                 this.points.push({x, y});
                 
                 // Add horizontal lines
                 if (col > 0) {
                     this.lines.push({
-                        from: {x: x - cellSize, y},
+                        from: {x: x - cellWidth, y},
                         to: {x, y}
                     });
                 }
                 // Add vertical lines
                 if (row > 0) {
                     this.lines.push({
-                        from: {x, y: y - cellSize},
+                        from: {x, y: y - cellHeight},
                         to: {x, y}
                     });
                 }

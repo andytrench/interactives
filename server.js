@@ -1,51 +1,82 @@
 const express = require('express');
+const fs = require('fs').promises;
 const path = require('path');
 const app = express();
+const port = 3000;
 
-// Set correct MIME types
-app.use(express.static(path.join(__dirname, 'public'), {
-    setHeaders: (res, path) => {
-        if (path.endsWith('.js')) {
-            res.set('Content-Type', 'application/javascript');
-        }
+app.use(express.json());
+app.use((req, res, next) => {
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self'"
+    );
+    next();
+});
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Ensure params directory exists
+const paramsDir = path.join(__dirname, 'params');
+fs.mkdir(paramsDir, { recursive: true }).catch(console.error);
+
+// Save settings endpoint
+app.post('/save-settings', async (req, res) => {
+    try {
+        const { name, settings } = req.body;
+        const filename = path.join(paramsDir, `${name}.json`);
+        await fs.writeFile(filename, JSON.stringify(settings, null, 2));
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Save error:', error);
+        res.status(500).json({ error: 'Failed to save settings' });
     }
-}));
-
-// Add near the top of the file, after the middleware setup
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        env: process.env.NODE_ENV
-    });
 });
 
-// Handle API routes here if needed
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok' });
+// Load settings endpoint
+app.get('/load-settings', async (req, res) => {
+    try {
+        const { name } = req.query;
+        const filename = path.join(paramsDir, `${name}.json`);
+        const data = await fs.readFile(filename, 'utf8');
+        res.json(JSON.parse(data));
+    } catch (error) {
+        console.error('Load error:', error);
+        res.status(500).json({ error: 'Failed to load settings' });
+    }
 });
 
-// Add this route near your other routes
-app.get('/api/status', (req, res) => {
-    res.json({
-        status: 'ok',
-        version: process.env.npm_package_version,
-        environment: process.env.NODE_ENV,
-        timestamp: new Date().toISOString()
-    });
+// List settings files endpoint
+app.get('/list-settings', async (req, res) => {
+    try {
+        const files = await fs.readdir(paramsDir);
+        res.json(files.filter(file => file.endsWith('.json')));
+    } catch (error) {
+        console.error('List error:', error);
+        res.status(500).json({ error: 'Failed to list settings' });
+    }
 });
 
-// Serve index.html for all other routes
+// Add this endpoint to list files in examples directory
+app.get('/examples/list', async (req, res) => {
+    try {
+        const examplesDir = path.join(__dirname, 'public', 'examples');
+        const files = await fs.readdir(examplesDir);
+        res.json(files);
+    } catch (error) {
+        console.error('Error listing examples:', error);
+        res.status(500).json({ error: 'Failed to list examples' });
+    }
+});
+
+// Serve example files
+app.use('/examples', express.static(path.join(__dirname, 'public', 'examples')));
+
+// Add a catch-all route to serve index.html for all routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Vercel will handle the port
-if (process.env.NODE_ENV !== 'production') {
-    const port = process.env.PORT || 3000;
-    app.listen(port, () => {
-        console.log(`Server running on port ${port}`);
-    });
-}
-
-module.exports = app;
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+});

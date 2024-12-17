@@ -84,7 +84,7 @@ class PatternGenerator {
             case 'spiral':
                 return this.generateSpiral(canvas);
             case 'target':
-                return this.generateTarget(canvas);
+                return this.generateTargetPattern(canvas);
             case 'grid':
                 return this.generateGrid(canvas);
             case 'triangle':
@@ -105,27 +105,41 @@ class PatternGenerator {
         };
     }
 
-    static generateTarget(canvas) {
+    static generateTargetPattern(canvas) {
+        const centerX = canvas.width/2;
+        const centerY = canvas.height/2;
+        const maxRadius = Math.min(canvas.width, canvas.height)/4 * CONFIG.patternScale;
+        
+        // Generate a point on a random circle
+        const numCircles = 8;
+        const circleIndex = Math.floor(Math.random() * numCircles);
+        const radius = ((circleIndex + 1) * maxRadius / numCircles);
+        
+        // Generate point at random angle on the selected circle
         const angle = Math.random() * Math.PI * 2;
-        const radius = (Math.random() * canvas.width/4 + 
-                      Math.random() * canvas.width/4) * CONFIG.patternScale;
         return {
-            x: canvas.width/2 + Math.cos(angle) * radius,
-            y: canvas.height/2 + Math.sin(angle) * radius,
+            x: centerX + Math.cos(angle) * radius,
+            y: centerY + Math.sin(angle) * radius,
             size: 1,
             color: CONFIG.dotColor
         };
     }
 
     static generateGrid(canvas) {
-        const cellSize = 50 * CONFIG.patternScale;
-        const cols = Math.floor(canvas.width / cellSize);
-        const rows = Math.floor(canvas.height / cellSize);
+        const baseSize = 50 * CONFIG.patternScale;
+        const cols = Math.max(2, Math.ceil(canvas.width / baseSize));
+        const rows = Math.max(2, Math.ceil(canvas.height / baseSize));
+        
+        // Adjust cell size to fill canvas
+        const cellWidth = canvas.width / cols;
+        const cellHeight = canvas.height / rows;
+        
         const col = Math.floor(Math.random() * cols);
         const row = Math.floor(Math.random() * rows);
+        
         return {
-            x: col * cellSize + Math.random() * cellSize,
-            y: row * cellSize + Math.random() * cellSize,
+            x: col * cellWidth + Math.random() * cellWidth,
+            y: row * cellHeight + Math.random() * cellHeight,
             size: 1,
             color: CONFIG.dotColor
         };
