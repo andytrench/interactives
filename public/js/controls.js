@@ -10,14 +10,32 @@ class Controls {
         this.setupColorControls();
         this.setupPatternControls();
         
+        this.setupSettingsToggle();
+    }
+
+    setupSettingsToggle() {
         // Add settings toggle
         const toggleButton = document.getElementById('toggleSettings');
         const controls = document.getElementById('controls');
+        const toggleText = document.getElementById('toggleSettingsText');
         
-        toggleButton.addEventListener('click', () => {
+        // Remove any existing click listeners
+        toggleButton.replaceWith(toggleButton.cloneNode(true));
+        
+        // Get fresh reference after cloning
+        const newToggleButton = document.getElementById('toggleSettings');
+        
+        newToggleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('Toggle button clicked');
             controls.classList.toggle('hidden');
-            toggleButton.querySelector('.text').textContent = 
-                controls.classList.contains('hidden') ? 'Show Settings' : 'Hide Settings';
+            newToggleButton.classList.toggle('hidden');
+            
+            const isHidden = controls.classList.contains('hidden');
+            document.getElementById('toggleSettingsText').textContent = 
+                isHidden ? 'Show Settings' : 'Hide Settings';
+            
+            console.log('Settings panel is now:', isHidden ? 'hidden' : 'visible');
         });
     }
 
