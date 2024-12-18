@@ -6,7 +6,6 @@ class Renderer {
         this.controls = new Controls();
         this.patternVisualizer = new PatternVisualizer(this.canvas, this.ctx);
         this.settingsManager = new SettingsManager(this.controls, () => {
-            // Initialize everything after settings are loaded
             this.setupCanvas();
             this.initParticles();
             this.setupPatternControls();
@@ -15,11 +14,9 @@ class Renderer {
             this.animate();
             if (onReady) onReady();
         });
-        this.patternScaleTimeout = null;
-        this.particleCountTimeout = null;
         
         this.lastParticleSpawnTime = 0;
-        this.spawnRate = 10; // Spawn X particles per frame
+        this.spawnRate = 10;
     }
 
     setupCanvas() {
@@ -143,21 +140,25 @@ class Renderer {
         }
     }
 
-    animate = () => {
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 1)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        if (CONFIG.particlesOnTop) {
-            this.handleEnhancedConnections();
-            this.drawParticles();
-        } else {
-            this.drawParticles();
-            this.handleEnhancedConnections();
+    animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        if (!this.controls.rocketMode) {
+            this.canvas.addEventListener('mousemove', (e) => {
+                this.controls.mouse.x = e.clientX;
+                this.controls.mouse.y = e.clientY;
+            });
         }
 
+        this.drawParticles();
+        this.drawConnections();
+        if (CONFIG.particlesOnTop) {
+            this.drawParticles();
+        }
+        
         this.patternVisualizer.draw();
         this.maintainParticleCount();
-        requestAnimationFrame(this.animate);
+        requestAnimationFrame(() => this.animate());
     }
 
     drawParticles() {
@@ -170,6 +171,46 @@ class Renderer {
                 this.createParticle();
             } else {
                 particle.draw(this.ctx);
+            }
+        }
+    }
+
+    drawConnections() {
+        this.ctx.lineWidth = CONFIG.lineThickness;
+        
+        for (let i = 0; i < this.particles.length; i++) {
+            const particle = this.particles[i];
+            particle.connections.clear();
+            
+            for (let j = i + 1; j < this.particles.length; j++) {
+                const other = this.particles[j];
+                const dx = other.x - particle.x;
+                const dy = other.y - particle.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < CONFIG.connectionDistance) {
+                    particle.connections.add(other);
+                    other.connections.add(particle);
+                    
+                    const alpha = (1 - distance / CONFIG.connectionDistance) * 
+                        (CONFIG.lineOpacity / 100) * 
+                        Math.min(particle.alpha, other.alpha);
+                        
+                    if (CONFIG.colorfulMode) {
+                        this.ctx.strokeStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, ${alpha})`;
+                    } else {
+                        const hex = CONFIG.lineColor.replace('#', '');
+                        const r = parseInt(hex.substring(0, 2), 16);
+                        const g = parseInt(hex.substring(2, 4), 16);
+                        const b = parseInt(hex.substring(4, 6), 16);
+                        this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    }
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(particle.x, particle.y);
+                    this.ctx.lineTo(other.x, other.y);
+                    this.ctx.stroke();
+                }
             }
         }
     }

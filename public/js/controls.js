@@ -4,6 +4,7 @@ class Controls {
     constructor() {
         console.log('Controls constructor called');
         this.mouse = { x: null, y: null, radius: 100 };
+        this.rocketMode = false;
         this.initializeControls();
         this.setInitialValues();
         this.setupEventListeners();
@@ -11,6 +12,7 @@ class Controls {
         this.setupPatternControls();
         
         this.setupSettingsToggle();
+        this.setupRocketControl();
     }
 
     setupSettingsToggle() {
@@ -148,6 +150,169 @@ class Controls {
                 document.getElementById('patternDistanceValue').textContent = patternDistance.value;
             });
         }
+    }
+
+    setupRocketControl() {
+        const rocket = document.getElementById('rocketIcon');
+        const controls = document.getElementById('controls');
+        const toggleButton = document.getElementById('toggleSettings');
+        let isDragging = false;
+        let isRocketActive = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let rocketStartX = 0;
+        let rocketStartY = 0;
+
+        // Disable default mouse interaction when rocket is active
+        const disableMouseInteraction = () => {
+            this.mouse.x = null;
+            this.mouse.y = null;
+            this.rocketMode = true;  // Flag to prevent normal mouse interaction
+        };
+
+        // Enable default mouse interaction when rocket is inactive
+        const enableMouseInteraction = () => {
+            this.rocketMode = false;
+        };
+
+        // Create a new rocket element for the canvas
+        const canvasRocket = document.createElement('img');
+        canvasRocket.src = '/images/rockit.png';
+        canvasRocket.id = 'canvasRocket';
+        canvasRocket.className = 'canvas-rocket';
+        document.body.appendChild(canvasRocket);
+        canvasRocket.style.display = 'none';
+
+        // Function to get rocket center position
+        const getRocketCenter = () => {
+            const rect = canvasRocket.getBoundingClientRect();
+            return {
+                x: rect.left + rect.width/2,
+                y: rect.top + rect.height/2
+            };
+        };
+
+        // Function to update rocket position
+        const updateRocketPosition = (x, y) => {
+            canvasRocket.style.left = `${x}px`;
+            canvasRocket.style.top = `${y}px`;
+
+            if (isRocketActive || isDragging) {
+                const center = getRocketCenter();
+                this.mouse.x = center.x;
+                this.mouse.y = center.y;
+            }
+        };
+
+        // Function to start dragging
+        const startDragging = (e) => {
+            e.preventDefault();
+            isDragging = true;
+            
+            const rect = (isRocketActive ? canvasRocket : rocket).getBoundingClientRect();
+            // Store initial positions
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            rocketStartX = rect.left;
+            rocketStartY = rect.top;
+            
+            canvasRocket.classList.add('dragging');
+            if (!isRocketActive) {
+                // Initial placement from menu
+                updateRocketPosition(e.clientX - 20, e.clientY - 20);
+            }
+        };
+
+        // Start dragging from menu
+        rocket.addEventListener('mousedown', (e) => {
+            if (!isRocketActive) {
+                // Hide the rocket icon in the menu
+                rocket.style.display = 'none';
+                // Show canvas rocket while dragging
+                canvasRocket.style.display = 'block';
+                canvasRocket.style.position = 'fixed';
+                canvasRocket.style.pointerEvents = 'auto';
+                startDragging(e);
+            }
+        });
+
+        // Handle dragging the active rocket
+        canvasRocket.addEventListener('mousedown', (e) => {
+            if (isRocketActive) {
+                startDragging(e);
+            }
+        });
+
+        // Handle drag
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Calculate new position based on mouse movement
+                const deltaX = e.clientX - dragStartX;
+                const deltaY = e.clientY - dragStartY;
+                const newX = rocketStartX + deltaX;
+                const newY = rocketStartY + deltaY;
+                updateRocketPosition(newX, newY);
+            }
+        });
+
+        // Handle drop
+        document.addEventListener('mouseup', (e) => {
+            if (isDragging) {
+                isDragging = false;
+                canvasRocket.classList.remove('dragging');
+                
+                if (!isRocketActive) {
+                    isRocketActive = true;
+                    disableMouseInteraction();
+                    canvasRocket.classList.add('active');
+                    controls.classList.add('hidden');
+                    toggleButton.classList.add('hidden');
+                    toggleButton.querySelector('.text').textContent = 'Show Settings';
+                }
+                
+                // Final position already set by last mousemove
+            }
+        });
+
+        // Double-click to deactivate
+        canvasRocket.addEventListener('dblclick', () => {
+            if (isRocketActive) {
+                isRocketActive = false;
+                enableMouseInteraction();
+                canvasRocket.style.display = 'none';
+                this.mouse.x = null;
+                this.mouse.y = null;
+                controls.classList.remove('hidden');
+                toggleButton.classList.remove('hidden');
+                // Show the rocket icon in the menu again
+                rocket.style.display = 'block';
+            }
+        });
+
+        // Override default mouse move behavior
+        document.addEventListener('mousemove', (e) => {
+            if (this.rocketMode) {
+                // Remove or comment out the stopPropagation call
+                // e.stopPropagation();  // Remove this line
+
+                // Add verbose logging
+                console.log('Mousemove event detected in rocketMode:', {
+                    isDragging,
+                    isRocketActive,
+                    mouseX: e.clientX,
+                    mouseY: e.clientY
+                });
+
+                // Prevent default mouse interaction when rocket is active
+                if (!isDragging && isRocketActive) {
+                    const center = getRocketCenter();
+                    this.mouse.x = center.x;
+                    this.mouse.y = center.y;
+                }
+            }
+        });
     }
 
     updateConfig() {
